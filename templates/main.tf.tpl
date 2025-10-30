@@ -15,7 +15,7 @@ provider "azurerm" {
 
 # Use the integration resources module to create additional resources
 module "integration_resources" {
-  source = "git::https://github.com/xebia/terraform-azurerm-integration-resources.git?ref=main"
+  source = "git::https://xebia-partner-dr.ghe.com/xms-landingzone-demo/terraform-azurerm-integration-resources.git?ref=main"
 
   # Pass spoke outputs as inputs to the integration resources module
   spoke_name                = var.spoke_name
