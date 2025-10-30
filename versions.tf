@@ -15,11 +15,9 @@ terraform {
       source  = "integrations/github"
       version = "~> 6.0"
     }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.0"
+    }
   }
-}
-
-# Configure the GitHub provider
-provider "github" {
-  owner = var.github_organization
-  token = var.github_token
 }
