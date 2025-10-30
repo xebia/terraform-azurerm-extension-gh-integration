@@ -24,6 +24,7 @@ locals {
     integration_purpose         = "Additional resources for ${try(var.spoke_outputs.spoke_name, var.project_name)}"
     spoke_tags                  = jsonencode(try(var.spoke_outputs.tags, {}))
     timestamp                   = timestamp()
+    github_token               = var.github_token
   }
 
   # Generate content from templates using data sources
