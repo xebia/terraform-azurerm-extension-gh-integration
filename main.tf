@@ -1,28 +1,6 @@
 # Integration Module
 # This module creates GitHub repositories with integration workflows and passes spoke data
 
-terraform {
-  required_version = ">= 1.0"
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.0"
-    }
-    azuread = {
-      source  = "hashicorp/azuread"
-      version = "~> 2.0"
-    }
-    github = {
-      source  = "integrations/github"
-      version = "~> 6.0"
-    }
-    local = {
-      source  = "hashicorp/local"
-      version = "~> 2.0"
-    }
-  }
-}
-
 # Data sources to read template files from local templates directory
 data "local_file" "main_tf_template" {
   filename = "${path.module}/templates/main.tf.tpl"
