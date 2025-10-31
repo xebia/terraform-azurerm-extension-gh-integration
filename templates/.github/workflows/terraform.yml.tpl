@@ -46,7 +46,7 @@ jobs:
 
     - name: Configure Git for private module access
       run: |
-        git config --global url."https://$${{ secrets.GITHUB_TOKEN }}@xebia-partner-dr.ghe.com/".insteadOf "https://xebia-partner-dr.ghe.com/"
+        git config --global url."https://$${{ secrets.GH_INTEGRATION_TOKEN }}@xebia-partner-dr.ghe.com/".insteadOf "https://xebia-partner-dr.ghe.com/"
         git config --global user.email "terraform@automation.local"
         git config --global user.name "Terraform Automation"
 

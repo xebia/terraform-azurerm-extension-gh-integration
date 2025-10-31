@@ -65,6 +65,13 @@ resource "github_actions_secret" "tf_state_container" {
   plaintext_value = "tfstate"  # Standard container name for Terraform state
 }
 
+# GitHub token for accessing private modules during Terraform init
+resource "github_actions_secret" "gh_integration_token" {
+  repository      = data.github_repository.integration_repo.name
+  secret_name     = "GH_INTEGRATION_TOKEN"
+  plaintext_value = var.github_token  # Use the same token from the integration module
+}
+
 # Create GitHub Actions variables for spoke outputs (non-sensitive data)
 resource "github_actions_variable" "spoke_outputs" {
   for_each = local.filtered_outputs
