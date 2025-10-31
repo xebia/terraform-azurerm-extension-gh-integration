@@ -40,8 +40,12 @@ data "azuread_application" "spoke_app" {
 }
 
 # Get reference to existing GitHub repository (created by gh-repo extension)
+# This repository should already exist when this module is called
 data "github_repository" "integration_repo" {
   name = var.project_name
+  
+  # Add dependency to ensure repository exists
+  depends_on = []
 }
 
 # Create federated identity credential for main branch
