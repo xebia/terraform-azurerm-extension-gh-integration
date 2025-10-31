@@ -22,7 +22,7 @@ jobs:
   terraform:
     name: 'Terraform'
     runs-on: ubuntu-latest
-    environment: $${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+    environment: ${environment}
 
     defaults:
       run:
@@ -125,7 +125,7 @@ jobs:
             owner: context.repo.owner,
             repo: context.repo.repo,
             ref: context.sha,
-            environment: 'production',
+            environment: '${environment}',
             required_contexts: [],
             auto_merge: false
           });
@@ -136,5 +136,5 @@ jobs:
             deployment_id: deployment.data.id,
             state: status,
             description: status === 'success' ? 'Deployment successful' : 'Deployment failed',
-            environment: 'production'
+            environment: '${environment}'
           });
