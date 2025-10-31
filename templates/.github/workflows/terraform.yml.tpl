@@ -13,16 +13,16 @@ permissions:
   pull-requests: write
 
 env:
-  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_CLIENT_ID: $${{ secrets.AZURE_CLIENT_ID }}
+  ARM_SUBSCRIPTION_ID: $${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: $${{ secrets.AZURE_TENANT_ID }}
   ARM_USE_OIDC: true
 
 jobs:
   terraform:
     name: 'Terraform'
     runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+    environment: $${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
 
     defaults:
       run:
@@ -40,9 +40,9 @@ jobs:
     - name: Azure Login
       uses: azure/login@v1
       with:
-        client-id: ${{ secrets.AZURE_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        client-id: $${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: $${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: $${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     - name: Terraform Format Check
       id: fmt
@@ -53,9 +53,9 @@ jobs:
       id: init
       run: |
         terraform init \
-          -backend-config="resource_group_name=${{ secrets.TF_STATE_RESOURCE_GROUP }}" \
-          -backend-config="storage_account_name=${{ secrets.TF_STATE_STORAGE_ACCOUNT }}" \
-          -backend-config="container_name=${{ secrets.TF_STATE_CONTAINER }}" \
+          -backend-config="resource_group_name=$${{ secrets.TF_STATE_RESOURCE_GROUP }}" \
+          -backend-config="storage_account_name=$${{ secrets.TF_STATE_STORAGE_ACCOUNT }}" \
+          -backend-config="container_name=$${{ secrets.TF_STATE_CONTAINER }}" \
           -backend-config="key=${spoke_name}-integration.tfstate"
 
     - name: Terraform Validate
@@ -72,24 +72,24 @@ jobs:
       uses: actions/github-script@v7
       if: github.event_name == 'pull_request'
       env:
-        PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+        PLAN: "terraform\n$${{ steps.plan.outputs.stdout }}"
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-token: $${{ secrets.GITHUB_TOKEN }}
         script: |
-          const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-          #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-          #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-          #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+          const output = `#### Terraform Format and Style 🖌\`$${{ steps.fmt.outcome }}\`
+          #### Terraform Initialization ⚙️\`$${{ steps.init.outcome }}\`
+          #### Terraform Validation 🤖\`$${{ steps.validate.outcome }}\`
+          #### Terraform Plan 📖\`$${{ steps.plan.outcome }}\`
 
           <details><summary>Show Plan</summary>
 
           \`\`\`\n
-          ${{ env.PLAN }}
+          $${{ env.PLAN }}
           \`\`\`
 
           </details>
 
-          *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+          *Pushed by: @$${{ github.actor }}, Action: \`$${{ github.event_name }}\`*`;
 
           github.rest.issues.createComment({
             issue_number: context.issue.number,
@@ -117,9 +117,9 @@ jobs:
       if: always() && github.ref == 'refs/heads/main'
       uses: actions/github-script@v7
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-token: $${{ secrets.GITHUB_TOKEN }}
         script: |
-          const status = '${{ job.status }}' === 'success' ? 'success' : 'failure';
+          const status = '$${{ job.status }}' === 'success' ? 'success' : 'failure';
           const deployment = await github.rest.repos.createDeployment({
             owner: context.repo.owner,
             repo: context.repo.repo,
