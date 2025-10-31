@@ -79,9 +79,7 @@ resource "github_actions_secret" "azure_subscription_id" {
 
 # Create GitHub Actions variables for spoke outputs (non-sensitive data)
 resource "github_actions_variable" "spoke_outputs" {
-  for_each = {
-    for key, value in local.non_sensitive_outputs : key => tostring(value)
-  }
+  for_each = local.filtered_outputs
   
   repository    = data.github_repository.integration_repo.name
   variable_name = upper("SPOKE_${each.key}")

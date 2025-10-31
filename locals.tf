@@ -12,11 +12,17 @@ locals {
     subnet_id                   = try(var.spoke_outputs.subnet_id, "")
   }
 
+  # Filter out empty values for GitHub Actions variables (GitHub requires non-empty values)
+  filtered_outputs = {
+    for key, value in local.non_sensitive_outputs : key => value
+    if value != null && value != ""
+  }
+
   # Template variables for populating template files
   template_vars = {
     project_name                = var.project_name
     spoke_name                  = try(var.spoke_outputs.spoke_name, var.project_name)
-    spoke_resource_group_name   = try(var.spoke_outputs.resource_group_name, "")
+    spoke_resource_group_name   = try(var.spoke_outputs.resource_group_name, "default-rg")
     spoke_location              = try(var.spoke_outputs.location, "West Europe")
     spoke_subnet_id             = try(var.spoke_outputs.subnet_id, "")
     tenant_id                   = var.azure_tenant_id
@@ -24,7 +30,6 @@ locals {
     integration_purpose         = "Additional resources for ${try(var.spoke_outputs.spoke_name, var.project_name)}"
     spoke_tags                  = jsonencode(try(var.spoke_outputs.tags, {}))
     timestamp                   = timestamp()
-    github_token               = var.github_token
   }
 
   # Generate content from templates using data sources
