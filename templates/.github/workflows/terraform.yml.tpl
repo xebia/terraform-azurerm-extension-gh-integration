@@ -102,16 +102,17 @@ jobs:
       if: steps.plan.outcome == 'failure'
       run: exit 1
 
-    - name: Terraform Apply
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -auto-approve -input=false
+    # TEMPORARILY COMMENTED OUT - Only testing the workflow flow without applying infrastructure
+    # - name: Terraform Apply
+    #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    #   run: terraform apply -auto-approve -input=false
 
-    - name: Terraform Output
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      id: output
-      run: |
-        echo "Terraform outputs:"
-        terraform output -json
+    # - name: Terraform Output
+    #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    #   id: output
+    #   run: |
+    #     echo "Terraform outputs:"
+    #     terraform output -json
 
     - name: Update Deployment Status
       if: always() && github.ref == 'refs/heads/main'
