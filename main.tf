@@ -34,11 +34,6 @@ data "local_file" "readme_template" {
   filename = "${path.module}/templates/README.md.tpl"
 }
 
-# Get the existing Azure AD application (service principal)
-data "azuread_application" "spoke_app" {
-  client_id = var.service_principal_client_id
-}
-
 # Get reference to existing GitHub repository (created by gh-repo extension)
 # This repository should already exist when this module is called
 data "github_repository" "integration_repo" {
@@ -48,34 +43,8 @@ data "github_repository" "integration_repo" {
   depends_on = []
 }
 
-# Create federated identity credential for main branch
-resource "azuread_application_federated_identity_credential" "integration_main" {
-  application_id = data.azuread_application.spoke_app.id
-  display_name   = "${var.project_name}-main-federated-credential"
-  description    = "Federated identity credential for ${var.project_name} main branch"
-  audiences      = ["api://AzureADTokenExchange"]
-  issuer         = var.github_oidc_issuer
-  subject        = "repo:${var.github_organization}/${var.project_name}:ref:refs/heads/main"
-}
-
-# Create GitHub repository secrets for Azure authentication
-resource "github_actions_secret" "azure_client_id" {
-  repository      = data.github_repository.integration_repo.name
-  secret_name     = "AZURE_CLIENT_ID"
-  plaintext_value = var.service_principal_client_id
-}
-
-resource "github_actions_secret" "azure_tenant_id" {
-  repository      = data.github_repository.integration_repo.name
-  secret_name     = "AZURE_TENANT_ID"
-  plaintext_value = var.azure_tenant_id
-}
-
-resource "github_actions_secret" "azure_subscription_id" {
-  repository      = data.github_repository.integration_repo.name
-  secret_name     = "AZURE_SUBSCRIPTION_ID"
-  plaintext_value = var.azure_subscription_id
-}
+# Note: Federated identity credentials and basic GitHub secrets (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID)
+# are already created by the gh-repo extension, so we don't duplicate them here.
 
 # Create GitHub Actions variables for spoke outputs (non-sensitive data)
 resource "github_actions_variable" "spoke_outputs" {
