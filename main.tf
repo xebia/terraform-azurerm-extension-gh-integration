@@ -46,6 +46,25 @@ data "github_repository" "integration_repo" {
 # Note: Federated identity credentials and basic GitHub secrets (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID)
 # are already created by the gh-repo extension, so we don't duplicate them here.
 
+# Create integration-specific GitHub secrets for Terraform state backend
+resource "github_actions_secret" "tf_state_resource_group" {
+  repository      = data.github_repository.integration_repo.name
+  secret_name     = "TF_STATE_RESOURCE_GROUP"
+  plaintext_value = try(var.spoke_outputs.resource_group_name, "")
+}
+
+resource "github_actions_secret" "tf_state_storage_account" {
+  repository      = data.github_repository.integration_repo.name
+  secret_name     = "TF_STATE_STORAGE_ACCOUNT"
+  plaintext_value = try(var.spoke_outputs.storage_account_name, "")
+}
+
+resource "github_actions_secret" "tf_state_container" {
+  repository      = data.github_repository.integration_repo.name
+  secret_name     = "TF_STATE_CONTAINER"
+  plaintext_value = "tfstate"  # Standard container name for Terraform state
+}
+
 # Create GitHub Actions variables for spoke outputs (non-sensitive data)
 resource "github_actions_variable" "spoke_outputs" {
   for_each = local.filtered_outputs
