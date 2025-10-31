@@ -44,6 +44,12 @@ jobs:
         tenant-id: $${{ secrets.AZURE_TENANT_ID }}
         subscription-id: $${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+    - name: Configure Git for private module access
+      run: |
+        git config --global url."https://$${{ secrets.GITHUB_TOKEN }}@xebia-partner-dr.ghe.com/".insteadOf "https://xebia-partner-dr.ghe.com/"
+        git config --global user.email "terraform@automation.local"
+        git config --global user.name "Terraform Automation"
+
     - name: Terraform Format Check
       id: fmt
       run: terraform fmt -check

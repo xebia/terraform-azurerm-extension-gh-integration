@@ -1,18 +1,5 @@
 # Terraform Configuration for ${project_name} Integration
 
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.0"
-    }
-  }
-}
-
-provider "azurerm" {
-  features {}
-}
-
 # Use the integration resources module to create additional resources
 module "integration_resources" {
   source = "git::https://xebia-partner-dr.ghe.com/xms-landingzone-demo/terraform-azurerm-integration-resources.git?ref=main"
