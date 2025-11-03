@@ -57,6 +57,14 @@ resource "github_actions_secret" "tf_state_storage_account" {
   repository      = data.github_repository.integration_repo.name
   secret_name     = "TF_STATE_STORAGE_ACCOUNT"
   plaintext_value = try(var.spoke_outputs.storage_account_name, "")
+  
+  # Validate that we actually have a storage account name
+  lifecycle {
+    precondition {
+      condition     = try(var.spoke_outputs.storage_account_name, "") != ""
+      error_message = "Storage account name from spoke outputs cannot be empty. Check that the spoke deployment includes a storage account."
+    }
+  }
 }
 
 resource "github_actions_secret" "tf_state_container" {

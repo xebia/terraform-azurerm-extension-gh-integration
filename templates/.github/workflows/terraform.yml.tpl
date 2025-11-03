@@ -55,6 +55,24 @@ jobs:
       run: terraform fmt -check
       continue-on-error: true
 
+    - name: Debug Backend Configuration
+      run: |
+        echo "Backend configuration:"
+        echo "Resource Group: [redacted for security]"
+        echo "Storage Account: [redacted for security]"  
+        echo "Container: $${{ secrets.TF_STATE_CONTAINER }}"
+        echo "Key: ${spoke_name}-integration.tfstate"
+        # Check if secrets are properly set (without revealing values)
+        if [ -z "$${{ secrets.TF_STATE_RESOURCE_GROUP }}" ]; then
+          echo "ERROR: TF_STATE_RESOURCE_GROUP is empty!"
+          exit 1
+        fi
+        if [ -z "$${{ secrets.TF_STATE_STORAGE_ACCOUNT }}" ]; then
+          echo "ERROR: TF_STATE_STORAGE_ACCOUNT is empty!"
+          exit 1
+        fi
+        echo "All backend configuration secrets are properly set"
+
     - name: Terraform Init
       id: init
       run: |
