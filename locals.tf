@@ -39,6 +39,7 @@ locals {
   outputs_tf_content       = templatestring(data.local_file.outputs_tf_template.content, local.template_vars)
   versions_tf_content      = data.local_file.versions_tf_template.content
   providers_tf_content     = data.local_file.providers_tf_template.content
+  backend_tf_content       = data.local_file.backend_tf_template.content
   terraform_workflow_content = templatestring(data.local_file.terraform_workflow_template.content, local.template_vars)
   readme_content           = templatestring(data.local_file.readme_template.content, local.template_vars)
 }

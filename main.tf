@@ -34,6 +34,10 @@ data "local_file" "readme_template" {
   filename = "${path.module}/templates/README.md.tpl"
 }
 
+data "local_file" "backend_tf_template" {
+  filename = "${path.module}/templates/backend.tf.tpl"
+}
+
 # Get reference to existing GitHub repository (created by gh-repo extension)
 # This repository should already exist when this module is called
 data "github_repository" "integration_repo" {
@@ -168,6 +172,18 @@ resource "github_repository_file" "providers_tf" {
   file                = "providers.tf"
   content             = local.providers_tf_content
   commit_message      = "Add provider configuration"
+  commit_author       = "Terraform Automation"
+  commit_email        = "terraform@automation.local"
+  overwrite_on_create = true
+}
+
+# Create backend.tf template for integration repository
+resource "github_repository_file" "backend_tf" {
+  repository          = data.github_repository.integration_repo.name
+  branch              = "main"
+  file                = "backend.tf"
+  content             = local.backend_tf_content
+  commit_message      = "Add backend configuration with Azure AD auth"
   commit_author       = "Terraform Automation"
   commit_email        = "terraform@automation.local"
   overwrite_on_create = true

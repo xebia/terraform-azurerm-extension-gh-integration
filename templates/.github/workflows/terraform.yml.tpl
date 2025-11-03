@@ -17,6 +17,7 @@ env:
   ARM_SUBSCRIPTION_ID: $${{ secrets.AZURE_SUBSCRIPTION_ID }}
   ARM_TENANT_ID: $${{ secrets.AZURE_TENANT_ID }}
   ARM_USE_OIDC: true
+  ARM_USE_AZUREAD: true
 
 jobs:
   terraform:
@@ -80,7 +81,8 @@ jobs:
           -backend-config="resource_group_name=$${{ secrets.TF_STATE_RESOURCE_GROUP }}" \
           -backend-config="storage_account_name=$${{ secrets.TF_STATE_STORAGE_ACCOUNT }}" \
           -backend-config="container_name=$${{ secrets.TF_STATE_CONTAINER }}" \
-          -backend-config="key=${spoke_name}-integration.tfstate"
+          -backend-config="key=${spoke_name}-integration.tfstate" \
+          -backend-config="use_azuread_auth=true"
 
     - name: Terraform Validate
       id: validate
