@@ -110,28 +110,3 @@ jobs:
     #   run: |
     #     echo "Terraform outputs:"
     #     terraform output -json
-
-    - name: Update Deployment Status
-      if: always()
-      uses: actions/github-script@v7
-      with:
-        github-token: $${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const status = '$${{ job.status }}' === 'success' ? 'success' : 'failure';
-          const deployment = await github.rest.repos.createDeployment({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            ref: context.sha,
-            environment: '${environment}',
-            required_contexts: [],
-            auto_merge: false
-          });
-          
-          await github.rest.repos.createDeploymentStatus({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            deployment_id: deployment.data.id,
-            state: status,
-            description: status === 'success' ? 'Deployment successful' : 'Deployment failed',
-            environment: '${environment}'
-          });
