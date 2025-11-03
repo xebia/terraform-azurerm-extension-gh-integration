@@ -1,10 +1,6 @@
 name: Terraform Deploy - ${project_name}
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
     inputs:
       runnerGroup:
@@ -16,7 +12,6 @@ on:
 permissions:
   id-token: write
   contents: read
-  pull-requests: write
 
 env:
   ARM_CLIENT_ID: $${{ secrets.AZURE_CLIENT_ID }}
@@ -97,39 +92,8 @@ jobs:
 
     - name: Terraform Plan
       id: plan
-      if: github.event_name == 'pull_request'
       run: terraform plan -no-color -input=false
       continue-on-error: true
-
-    - name: Update Pull Request
-      uses: actions/github-script@v7
-      if: github.event_name == 'pull_request'
-      env:
-        PLAN: "terraform\n$${{ steps.plan.outputs.stdout }}"
-      with:
-        github-token: $${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const output = `#### Terraform Format and Style 🖌\`$${{ steps.fmt.outcome }}\`
-          #### Terraform Initialization ⚙️\`$${{ steps.init.outcome }}\`
-          #### Terraform Validation 🤖\`$${{ steps.validate.outcome }}\`
-          #### Terraform Plan 📖\`$${{ steps.plan.outcome }}\`
-
-          <details><summary>Show Plan</summary>
-
-          \`\`\`\n
-          $${{ env.PLAN }}
-          \`\`\`
-
-          </details>
-
-          *Pushed by: @$${{ github.actor }}, Action: \`$${{ github.event_name }}\`*`;
-
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: output
-          })
 
     - name: Terraform Plan Status
       if: steps.plan.outcome == 'failure'
@@ -148,7 +112,7 @@ jobs:
     #     terraform output -json
 
     - name: Update Deployment Status
-      if: always() && github.ref == 'refs/heads/main'
+      if: always()
       uses: actions/github-script@v7
       with:
         github-token: $${{ secrets.GITHUB_TOKEN }}
