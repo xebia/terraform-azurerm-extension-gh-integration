@@ -52,7 +52,9 @@ terraform apply
 
 ## Configuration
 
-The deployment is configured through the `terraform.tfvars` file, which contains values automatically populated from the spoke deployment:
+> **Note**: If you have an existing `terraform.tfvars` file from a previous version, please delete it manually as this integration now uses `spoke-outputs.tfvars` for better clarity.
+
+The deployment is configured through the `spoke-outputs.tfvars` file, which contains values automatically populated from the spoke deployment:
 
 ### Basic Configuration
 - `spoke_name`: Name of the associated spoke
@@ -108,7 +110,7 @@ resource "azurerm_private_endpoint" "example" {
 
 You can customize this integration by:
 
-1. **Modifying variables**: Update `terraform.tfvars` for your specific needs
+1. **Modifying variables**: Update `spoke-outputs.tfvars` for your specific needs
 2. **Adding resources**: Extend `main.tf` with additional Azure resources
 3. **Updating tags**: Modify tags in the variables file
 
