@@ -72,23 +72,23 @@ You can access specific subnets in several ways:
 
 ```hcl
 # Access all subnet IDs
-local {
-  all_subnet_ids = [for subnet in var.spoke_subnets : subnet.subnet_id]
+locals {
+  all_subnet_ids = [for subnet in local.spoke_subnets : subnet.subnet_id]
 }
 
 # Find subnet by name pattern
-local {
+locals {
   web_subnet_id = [
-    for subnet in var.spoke_subnets : subnet.subnet_id 
+    for subnet in local.spoke_subnets : subnet.subnet_id 
     if contains(split("-", subnet.subnet_name), "web")
   ][0]
 }
 
 # Group subnets by virtual network
-local {
+locals {
   subnets_by_vnet = {
-    for vnet_key, vnet in var.spoke_virtual_networks : vnet_key => [
-      for subnet in var.spoke_subnets : subnet
+    for vnet_key, vnet in local.spoke_virtual_networks : vnet_key => [
+      for subnet in local.spoke_subnets : subnet
       if subnet.vnet_key == vnet_key
     ]
   }
@@ -96,9 +96,9 @@ local {
 
 # Create resources in multiple subnets
 resource "azurerm_private_endpoint" "example" {
-  for_each = { for subnet in var.spoke_subnets : subnet.subnet_key => subnet }
+  for_each = { for subnet in local.spoke_subnets : subnet.subnet_key => subnet }
   
-  name      = "pe-${each.key}"
+  name      = "pe-$${each.key}"
   subnet_id = each.value.subnet_id
   # ... other configuration
 }

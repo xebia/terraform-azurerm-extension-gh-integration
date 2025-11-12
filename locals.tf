@@ -51,6 +51,10 @@ locals {
     spoke_virtual_networks      = jsonencode(local.virtual_networks)
     spoke_subnets               = jsonencode(local.all_subnet_ids)
     timestamp                   = timestamp()
+    
+    # Additional variables for complex template expressions
+    spoke_virtual_networks_json = jsonencode(local.virtual_networks)
+    spoke_subnets_json          = jsonencode(local.all_subnet_ids)
   }
 
   # Generate content from templates using data sources
