@@ -1,27 +1,41 @@
 # Variables for ${project_name} Integration
+# These variables are populated from spoke-outputs.tfvars
 
 variable "spoke_name" {
   description = "The name of the spoke deployment"
   type        = string
-  default     = "${spoke_name}"
 }
 
 variable "spoke_resource_group_name" {
   description = "The resource group name from the spoke deployment"
   type        = string
-  default     = "${spoke_resource_group_name}"
 }
 
 variable "spoke_location" {
   description = "The location of the spoke deployment"
   type        = string
-  default     = "${spoke_location}"
+}
+
+variable "tenant_id" {
+  description = "Azure AD tenant ID"
+  type        = string
+}
+
+variable "environment" {
+  description = "Environment name (dev, test, prod)"
+  type        = string
+}
+
+variable "integration_purpose" {
+  description = "Purpose of this integration deployment"
+  type        = string
+  default     = "Additional resources for spoke integration"
 }
 
 variable "spoke_tags" {
   description = "Tags from the spoke deployment"
   type        = map(string)
-  default     = ${spoke_tags}
+  default     = {}
 }
 
 variable "spoke_virtual_networks" {
@@ -29,6 +43,7 @@ variable "spoke_virtual_networks" {
   type = map(object({
     name          = string
     id            = string
+    region        = string
     address_space = list(string)
     subnets = map(object({
       name             = string
@@ -36,7 +51,7 @@ variable "spoke_virtual_networks" {
       address_prefixes = list(string)
     }))
   }))
-  default = ${spoke_virtual_networks}
+  default = {}
 }
 
 variable "spoke_subnets" {
@@ -49,24 +64,5 @@ variable "spoke_subnets" {
     subnet_id        = string
     address_prefixes = list(string)
   }))
-  default = ${spoke_subnets}
-}
-
-variable "tenant_id" {
-  description = "Azure AD tenant ID"
-  type        = string
-  default     = "${tenant_id}"
-}
-
-# Additional variables for integration-specific configuration
-variable "environment" {
-  description = "Environment name (dev, test, prod)"
-  type        = string
-  default     = "${environment}"
-}
-
-variable "integration_purpose" {
-  description = "Purpose of this integration deployment"
-  type        = string
-  default     = "Additional resources for ${spoke_name}"
+  default = []
 }

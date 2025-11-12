@@ -5,69 +5,82 @@ module "integration_resources" {
   source = "git::https://xebia-partner-dr.ghe.com/xms-landingzone-demo/terraform-azurerm-integration-resources.git?ref=main"
 
   # Pass spoke outputs as inputs to the integration resources module
-  spoke_name                = "${spoke_name}"
-  spoke_resource_group_name = "${spoke_resource_group_name}"
-  spoke_location           = "${spoke_location}"
-  spoke_tags               = ${spoke_tags}
-  tenant_id                = "${tenant_id}"
-  environment              = "${environment}"
-  integration_purpose      = "${integration_purpose}"
+  spoke_name                = var.spoke_name
+  spoke_resource_group_name = var.spoke_resource_group_name
+  spoke_location           = var.spoke_location
+  spoke_tags               = var.spoke_tags
+  tenant_id                = var.tenant_id
+  environment              = var.environment
+  integration_purpose      = var.integration_purpose
 
   # Enhanced networking support - pass all VNets and subnets
-  spoke_virtual_networks   = ${spoke_virtual_networks}
-  spoke_subnets           = ${spoke_subnets}
-}
-
-# Example: How to access specific subnets by name or type
-locals {
-  # Parse networking data from spoke deployment
-  spoke_virtual_networks = ${spoke_virtual_networks}
-  spoke_subnets         = ${spoke_subnets}
-  
-  # Find a specific subnet by name (example: "snet-web")
-  web_subnet = try([
-    for subnet in local.spoke_subnets : subnet.subnet_id 
-    if contains(split("-", subnet.subnet_name), "web")
-  ][0], "")
-  
-  # Find subnets for a specific VNet
-  primary_vnet_subnets = try([
-    for subnet in local.spoke_subnets : subnet
-    if subnet.vnet_key == keys(local.spoke_virtual_networks)[0]
-  ], [])
-  
-  # Get all subnet IDs as a list
-  all_subnet_ids = [for subnet in local.spoke_subnets : subnet.subnet_id]
-  
-  # Get the first available subnet ID (for simple scenarios)
-  primary_subnet_id = length(local.all_subnet_ids) > 0 ? local.all_subnet_ids[0] : ""
+  spoke_virtual_networks   = var.spoke_virtual_networks
+  spoke_subnets           = var.spoke_subnets
 }
 
 # Example: Create a resource group for integration resources
-resource "azurerm_resource_group" "example" {
-  count    = length(local.spoke_subnets) > 0 ? 1 : 0
-  name     = "${spoke_name}-integration-example"
-  location = "${spoke_location}"
-  tags     = ${spoke_tags}
+resource "azurerm_resource_group" "integration" {
+  count    = length(var.spoke_subnets) > 0 ? 1 : 0
+  name     = local.naming.resource_group_name
+  location = local.spoke_info.location
+  tags     = local.integration_tags
 }
 
-# Uncomment below to create example private endpoints
-/*
-resource "azurerm_private_endpoint" "example" {
-  for_each = { for subnet in local.spoke_subnets : subnet.subnet_key => subnet }
+# Example: Create a storage account using the primary subnet for private endpoint
+resource "azurerm_storage_account" "integration" {
+  count = length(local.subnet_lookup.pe_subnets) > 0 ? 1 : 0
   
-  name                = "${spoke_name}-pe-$${each.key}"
-  location            = "${spoke_location}"
-  resource_group_name = azurerm_resource_group.example[0].name
-  subnet_id           = each.value.subnet_id
+  name                     = local.naming.storage_account_name
+  resource_group_name      = azurerm_resource_group.integration[0].name
+  location                = local.spoke_info.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+  
+  # Disable public access when we have private endpoints
+  public_network_access_enabled = false
+  
+  tags = local.integration_tags
+}
+
+# Example: Create private endpoint for storage account
+resource "azurerm_private_endpoint" "storage_pe" {
+  count = length(local.subnet_lookup.pe_subnets) > 0 && length(azurerm_storage_account.integration) > 0 ? 1 : 0
+  
+  name                = "$${local.naming.prefix}-storage-pe"
+  location            = local.spoke_info.location
+  resource_group_name = azurerm_resource_group.integration[0].name
+  subnet_id           = local.subnet_lookup.pe_subnets[0].subnet_id
 
   private_service_connection {
-    name                           = "psc-$${each.key}"
-    private_connection_resource_id = "/subscriptions/example/resourceGroups/example/providers/Microsoft.Storage/storageAccounts/example"
+    name                           = "$${local.naming.prefix}-storage-psc"
+    private_connection_resource_id = azurerm_storage_account.integration[0].id
     is_manual_connection           = false
     subresource_names              = ["blob"]
   }
 
-  tags = ${spoke_tags}
+  tags = local.integration_tags
 }
-*/
+
+# Example: Create additional resources for each VNet
+resource "azurerm_network_security_group" "integration_nsg" {
+  for_each = local.vnet_lookup.vnet_to_subnets
+  
+  name                = "$${local.naming.prefix}-$${each.key}-nsg"
+  location            = local.spoke_info.location
+  resource_group_name = azurerm_resource_group.integration[0].name
+
+  # Example security rule
+  security_rule {
+    name                       = "AllowHTTPS"
+    priority                   = 1001
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  tags = local.integration_tags
+}
