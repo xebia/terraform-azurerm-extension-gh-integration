@@ -18,13 +18,13 @@ locals {
   # Extract all subnet IDs for easier access
   all_subnet_ids = flatten([
     for vnet_key, vnet in local.virtual_networks : [
-      for subnet_key, subnet in vnet.subnets : {
-        vnet_name    = vnet.name
-        vnet_key     = vnet_key
-        subnet_name  = subnet.name
-        subnet_key   = subnet_key
-        subnet_id    = subnet.id
-        address_prefixes = subnet.address_prefixes
+      for subnet_key, subnet in try(vnet.subnets, {}) : {
+        vnet_name        = vnet.name
+        vnet_key         = vnet_key
+        subnet_name      = subnet.name
+        subnet_key       = subnet_key
+        subnet_id        = subnet.id
+        address_prefixes = try(subnet.address_prefixes, [])
       }
     ]
   ])
