@@ -24,10 +24,32 @@ variable "spoke_tags" {
   default     = ${spoke_tags}
 }
 
-variable "spoke_subnet_id" {
-  description = "Subnet ID from the spoke deployment for private endpoints"
-  type        = string
-  default     = "${spoke_subnet_id}"
+variable "spoke_virtual_networks" {
+  description = "Complete virtual network information from the spoke deployment"
+  type = map(object({
+    name          = string
+    id            = string
+    address_space = list(string)
+    subnets = map(object({
+      name             = string
+      id               = string
+      address_prefixes = list(string)
+    }))
+  }))
+  default = ${spoke_virtual_networks}
+}
+
+variable "spoke_subnets" {
+  description = "All subnet information in simplified format for easy access"
+  type = list(object({
+    vnet_name        = string
+    vnet_key         = string
+    subnet_name      = string
+    subnet_key       = string
+    subnet_id        = string
+    address_prefixes = list(string)
+  }))
+  default = ${spoke_subnets}
 }
 
 variable "tenant_id" {

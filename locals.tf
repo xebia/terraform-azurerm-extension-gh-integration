@@ -12,6 +12,26 @@ locals {
     subnet_id                   = try(var.spoke_outputs.subnet_id, "")
   }
 
+  # Process virtual networks and subnets information
+  virtual_networks = try(var.spoke_outputs.virtual_networks, {})
+  
+  # Extract all subnet IDs for easier access
+  all_subnet_ids = flatten([
+    for vnet_key, vnet in local.virtual_networks : [
+      for subnet_key, subnet in vnet.subnets : {
+        vnet_name    = vnet.name
+        vnet_key     = vnet_key
+        subnet_name  = subnet.name
+        subnet_key   = subnet_key
+        subnet_id    = subnet.id
+        address_prefixes = subnet.address_prefixes
+      }
+    ]
+  ])
+  
+  # Get the first subnet ID (for backward compatibility)
+  primary_subnet_id = length(local.all_subnet_ids) > 0 ? local.all_subnet_ids[0].subnet_id : ""
+
   # Filter out empty values for GitHub Actions variables (GitHub requires non-empty values)
   filtered_outputs = {
     for key, value in local.non_sensitive_outputs : key => value
@@ -24,11 +44,12 @@ locals {
     spoke_name                  = try(var.spoke_outputs.spoke_name, var.project_name)
     spoke_resource_group_name   = try(var.spoke_outputs.resource_group_name, "default-rg")
     spoke_location              = try(var.spoke_outputs.location, "West Europe")
-    spoke_subnet_id             = try(var.spoke_outputs.subnet_id, "")
     tenant_id                   = var.azure_tenant_id
     environment                 = try(var.spoke_outputs.environment, "dev")
     integration_purpose         = "Additional resources for ${try(var.spoke_outputs.spoke_name, var.project_name)}"
     spoke_tags                  = jsonencode(try(var.spoke_outputs.tags, {}))
+    spoke_virtual_networks      = jsonencode(local.virtual_networks)
+    spoke_subnets               = jsonencode(local.all_subnet_ids)
     timestamp                   = timestamp()
   }
 

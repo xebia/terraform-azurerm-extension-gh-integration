@@ -54,10 +54,55 @@ terraform apply
 
 The deployment is configured through the `terraform.tfvars` file, which contains values automatically populated from the spoke deployment:
 
+### Basic Configuration
 - `spoke_name`: Name of the associated spoke
 - `spoke_resource_group_name`: Resource group containing spoke resources
 - `spoke_location`: Azure region for the deployment
 - `spoke_tags`: Tags inherited from the spoke deployment
+
+### Networking Configuration
+The integration includes comprehensive networking information from the spoke deployment:
+
+- `spoke_virtual_networks`: Complete virtual network information with all subnets
+- `spoke_subnets`: Simplified list of all subnets for easy access
+
+#### Using Multiple Subnets
+
+You can access specific subnets in several ways:
+
+```hcl
+# Access all subnet IDs
+local {
+  all_subnet_ids = [for subnet in var.spoke_subnets : subnet.subnet_id]
+}
+
+# Find subnet by name pattern
+local {
+  web_subnet_id = [
+    for subnet in var.spoke_subnets : subnet.subnet_id 
+    if contains(split("-", subnet.subnet_name), "web")
+  ][0]
+}
+
+# Group subnets by virtual network
+local {
+  subnets_by_vnet = {
+    for vnet_key, vnet in var.spoke_virtual_networks : vnet_key => [
+      for subnet in var.spoke_subnets : subnet
+      if subnet.vnet_key == vnet_key
+    ]
+  }
+}
+
+# Create resources in multiple subnets
+resource "azurerm_private_endpoint" "example" {
+  for_each = { for subnet in var.spoke_subnets : subnet.subnet_key => subnet }
+  
+  name      = "pe-${each.key}"
+  subnet_id = each.value.subnet_id
+  # ... other configuration
+}
+```
 
 ## Customization
 
