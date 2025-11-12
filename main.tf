@@ -14,8 +14,8 @@ data "local_file" "outputs_tf_template" {
   filename = "${path.module}/templates/outputs.tf.tpl"
 }
 
-data "local_file" "terraform_tfvars_template" {
-  filename = "${path.module}/templates/terraform.tfvars.tpl"
+data "local_file" "spoke_outputs_tfvars_template" {
+  filename = "${path.module}/templates/spoke-outputs.tfvars.tpl"
 }
 
 data "local_file" "versions_tf_template" {
@@ -93,12 +93,12 @@ resource "github_actions_variable" "spoke_outputs" {
   value         = each.value
 }
 
-# Create terraform.tfvars file content for integration repository
-resource "github_repository_file" "terraform_tfvars" {
+# Create spoke-outputs.tfvars file content for integration repository
+resource "github_repository_file" "spoke_outputs_tfvars" {
   repository          = data.github_repository.integration_repo.name
   branch              = "main"
-  file                = "terraform.tfvars"
-  content             = local.terraform_tfvars_content
+  file                = "spoke-outputs.tfvars"
+  content             = local.spoke_outputs_tfvars_content
   commit_message      = "Add spoke configuration variables"
   commit_author       = "Terraform Automation"
   commit_email        = "terraform@automation.local"

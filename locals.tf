@@ -58,7 +58,7 @@ locals {
   }
 
   # Generate content from templates using data sources
-  terraform_tfvars_content = templatestring(data.local_file.terraform_tfvars_template.content, local.template_vars)
+  spoke_outputs_tfvars_content = templatestring(data.local_file.spoke_outputs_tfvars_template.content, local.template_vars)
   main_tf_content          = templatestring(data.local_file.main_tf_template.content, local.template_vars)
   variables_tf_content     = templatestring(data.local_file.variables_tf_template.content, local.template_vars)
   outputs_tf_content       = templatestring(data.local_file.outputs_tf_template.content, local.template_vars)
