@@ -92,7 +92,7 @@ jobs:
 
     - name: Terraform Plan
       id: plan
-      run: terraform plan -no-color -input=false
+      run: terraform plan -var-file="spoke-outputs.tfvars" -no-color -input=false
       continue-on-error: true
 
     - name: Terraform Plan Status
@@ -102,7 +102,7 @@ jobs:
     # TEMPORARILY COMMENTED OUT - Only testing the workflow flow without applying infrastructure
     # - name: Terraform Apply
     #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    #   run: terraform apply -auto-approve -input=false
+    #   run: terraform apply -var-file="spoke-outputs.tfvars" -auto-approve -input=false
 
     # - name: Terraform Output
     #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
