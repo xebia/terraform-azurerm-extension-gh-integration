@@ -41,56 +41,54 @@ data "local_file" "backend_tf_template" {
 # Get reference to existing GitHub repository (created by gh-repo extension)
 # This repository should already exist when this module is called
 data "github_repository" "integration_repo" {
-  name = var.project_name
+  name = coalesce(var.repository_name, var.project_name)
+}
+
+# Check if main.tf already exists to determine if this is first deployment or update
+data "github_repository_file" "existing_main_tf" {
+  repository = data.github_repository.integration_repo.name
+  branch     = "main"
+  file       = "main.tf"
+}
+
+# Determine if this is first deployment (main.tf doesn't exist) or update (main.tf exists)
+locals {
+  is_first_deployment = data.github_repository_file.existing_main_tf.content == null
+
+  # Generate spoke-outputs.tfvars content using the template
+  spoke_outputs_tfvars_content = templatestring(data.local_file.spoke_outputs_tfvars_template.content, {
+    spoke_name                    = var.spoke_name
+    subscription_id              = var.subscription_id
+    spoke_resource_group_name    = var.spoke_resource_group_name
+    spoke_location               = var.spoke_location
+    key_vault_id                 = var.key_vault_id
+    key_vault_name               = var.key_vault_name
+    virtual_network_id           = var.virtual_network_id
+    virtual_network_name         = var.virtual_network_name
+    subnet_ids                   = var.subnet_ids
+    subnet_names                 = var.subnet_names
+    log_analytics_workspace_id   = var.log_analytics_workspace_id
+    application_insights_id      = var.application_insights_id
+  })
+
+  # Generate other template content (only for first deployment)
+  main_tf_content = templatestring(data.local_file.main_tf_template.content, {
+    spoke_name = var.spoke_name
+  })
   
-  # Add dependency to ensure repository exists
-  depends_on = []
-}
-
-# Note: Federated identity credentials and basic GitHub secrets (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID)
-# are already created by the gh-repo extension, so we don't duplicate them here.
-
-# Create integration-specific GitHub secrets for Terraform state backend
-resource "github_actions_secret" "tf_state_resource_group" {
-  repository      = data.github_repository.integration_repo.name
-  secret_name     = "TF_STATE_RESOURCE_GROUP"
-  plaintext_value = try(var.spoke_outputs.resource_group_name, "")
-}
-
-resource "github_actions_secret" "tf_state_storage_account" {
-  repository      = data.github_repository.integration_repo.name
-  secret_name     = "TF_STATE_STORAGE_ACCOUNT"
-  plaintext_value = try(var.spoke_outputs.storage_account_name, "")
-  
-  # Validate that we actually have a storage account name
-  lifecycle {
-    precondition {
-      condition     = try(var.spoke_outputs.storage_account_name, "") != ""
-      error_message = "Storage account name from spoke outputs cannot be empty. Check that the spoke deployment includes a storage account."
-    }
-  }
-}
-
-resource "github_actions_secret" "tf_state_container" {
-  repository      = data.github_repository.integration_repo.name
-  secret_name     = "TF_STATE_CONTAINER"
-  plaintext_value = "tfstate"  # Standard container name for Terraform state
-}
-
-# GitHub token for accessing private modules during Terraform init
-resource "github_actions_secret" "gh_integration_token" {
-  repository      = data.github_repository.integration_repo.name
-  secret_name     = "GH_INTEGRATION_TOKEN"
-  plaintext_value = var.github_token  # Use the same token from the integration module
-}
-
-# Create GitHub Actions variables for spoke outputs (non-sensitive data)
-resource "github_actions_variable" "spoke_outputs" {
-  for_each = local.filtered_outputs
-  
-  repository    = data.github_repository.integration_repo.name
-  variable_name = upper("SPOKE_${each.key}")
-  value         = each.value
+  variables_tf_content = data.local_file.variables_tf_template.content
+  outputs_tf_content = data.local_file.outputs_tf_template.content  
+  versions_tf_content = data.local_file.versions_tf_template.content
+  providers_tf_content = data.local_file.providers_tf_template.content
+  backend_tf_content = templatestring(data.local_file.backend_tf_template.content, {
+    spoke_name = var.spoke_name
+    subscription_id = var.subscription_id
+  })
+  readme_content = templatestring(data.local_file.readme_template.content, {
+    spoke_name = var.spoke_name
+    repository_name = coalesce(var.repository_name, var.project_name)
+  })
+  terraform_workflow_content = data.local_file.terraform_workflow_template.content
 }
 
 # Create spoke-outputs.tfvars file content for integration repository
@@ -99,7 +97,7 @@ resource "github_repository_file" "spoke_outputs_tfvars" {
   branch              = "main"
   file                = "spoke-outputs.tfvars"
   content             = local.spoke_outputs_tfvars_content
-  commit_message      = "Add spoke configuration variables"
+  commit_message      = local.is_first_deployment ? "Add spoke configuration variables" : "chore: update spoke configuration variables from spoke deployment"
   commit_author       = "Terraform Automation"
   commit_email        = "terraform@automation.local"
   overwrite_on_create = true
@@ -107,6 +105,8 @@ resource "github_repository_file" "spoke_outputs_tfvars" {
 
 # Create GitHub Actions workflow for deployment
 resource "github_repository_file" "workflow_terraform" {
+  count = local.is_first_deployment ? 1 : 0
+  
   repository          = data.github_repository.integration_repo.name
   branch              = "main"
   file                = ".github/workflows/terraform.yml"
@@ -119,6 +119,8 @@ resource "github_repository_file" "workflow_terraform" {
 
 # Create main.tf template for integration repository
 resource "github_repository_file" "main_tf" {
+  count = local.is_first_deployment ? 1 : 0
+  
   repository          = data.github_repository.integration_repo.name
   branch              = "main"
   file                = "main.tf"
@@ -131,6 +133,8 @@ resource "github_repository_file" "main_tf" {
 
 # Create variables.tf template for integration repository
 resource "github_repository_file" "variables_tf" {
+  count = local.is_first_deployment ? 1 : 0
+  
   repository          = data.github_repository.integration_repo.name
   branch              = "main"
   file                = "variables.tf"
@@ -143,6 +147,8 @@ resource "github_repository_file" "variables_tf" {
 
 # Create outputs.tf template for integration repository
 resource "github_repository_file" "outputs_tf" {
+  count = local.is_first_deployment ? 1 : 0
+  
   repository          = data.github_repository.integration_repo.name
   branch              = "main"
   file                = "outputs.tf"
@@ -155,6 +161,8 @@ resource "github_repository_file" "outputs_tf" {
 
 # Create versions.tf template for integration repository
 resource "github_repository_file" "versions_tf" {
+  count = local.is_first_deployment ? 1 : 0
+  
   repository          = data.github_repository.integration_repo.name
   branch              = "main"
   file                = "versions.tf"
@@ -167,6 +175,8 @@ resource "github_repository_file" "versions_tf" {
 
 # Create providers.tf template for integration repository
 resource "github_repository_file" "providers_tf" {
+  count = local.is_first_deployment ? 1 : 0
+  
   repository          = data.github_repository.integration_repo.name
   branch              = "main"
   file                = "providers.tf"
@@ -179,6 +189,8 @@ resource "github_repository_file" "providers_tf" {
 
 # Create backend.tf template for integration repository
 resource "github_repository_file" "backend_tf" {
+  count = local.is_first_deployment ? 1 : 0
+  
   repository          = data.github_repository.integration_repo.name
   branch              = "main"
   file                = "backend.tf"
@@ -191,6 +203,8 @@ resource "github_repository_file" "backend_tf" {
 
 # Create README.md for integration repository
 resource "github_repository_file" "readme" {
+  count = local.is_first_deployment ? 1 : 0
+  
   repository          = data.github_repository.integration_repo.name
   branch              = "main"
   file                = "README.md"

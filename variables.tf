@@ -1,97 +1,89 @@
 # Variables for Integration Module
 
-# Azure Configuration
-variable "azure_tenant_id" {
-  description = "The Azure tenant ID"
+# Repository Configuration
+variable "repository_name" {
+  description = "Name of the integration repository"
   type        = string
 }
 
-variable "azure_subscription_id" {
-  description = "The Azure subscription ID"
-  type        = string
-}
-
-variable "service_principal_client_id" {
-  description = "The client ID of the Azure service principal"
-  type        = string
-}
-
-# GitHub Configuration
-variable "github_organization" {
-  description = "The GitHub organization name"
-  type        = string
-}
-
-variable "github_token" {
-  description = "GitHub Personal Access Token"
-  type        = string
-  sensitive   = true
-}
-
-variable "github_oidc_issuer" {
-  description = "The GitHub OIDC issuer URL"
-  type        = string
-  default     = "https://token.actions.githubusercontent.com"
-}
-
-# Project Configuration
-variable "project_name" {
-  description = "Name of the integration project (will be used as repository name)"
-  type        = string
-}
-
-# Spoke Outputs - All data from the spoke deployment
-variable "spoke_outputs" {
-  description = "All outputs from the spoke deployment to be passed to integration repository"
-  type        = any
-  default     = {}
-}
-
-# Integration Resource Variables (extracted from spoke_outputs for direct resource creation)
-variable "spoke_name" {
-  description = "The name of the spoke deployment"
+variable "repository_description" {
+  description = "Description of the integration repository"
   type        = string
   default     = ""
+}
+
+# Spoke Configuration
+variable "spoke_name" {
+  description = "Name of the spoke deployment"
+  type        = string
+}
+
+variable "subscription_id" {
+  description = "Azure subscription ID"
+  type        = string
 }
 
 variable "spoke_resource_group_name" {
-  description = "The resource group name from the spoke deployment"
+  description = "Spoke resource group name"
   type        = string
-  default     = ""
 }
 
 variable "spoke_location" {
-  description = "The location of the spoke deployment"
+  description = "Spoke location"
   type        = string
-  default     = "West Europe"
 }
 
-variable "spoke_tags" {
-  description = "Tags from the spoke deployment"
+# Key Vault Configuration
+variable "key_vault_id" {
+  description = "Key Vault resource ID"
+  type        = string
+}
+
+variable "key_vault_name" {
+  description = "Key Vault name"
+  type        = string
+}
+
+# Virtual Network Configuration
+variable "virtual_network_id" {
+  description = "Virtual network resource ID"
+  type        = string
+}
+
+variable "virtual_network_name" {
+  description = "Virtual network name"
+  type        = string
+}
+
+# Subnet Configuration - ALL subnets from spoke (user chooses in main.tf)
+variable "subnet_ids" {
+  description = "Map of all subnet IDs from spoke deployment"
   type        = map(string)
   default     = {}
 }
 
-variable "spoke_subnet_id" {
-  description = "Subnet ID from the spoke deployment for private endpoints"
+variable "subnet_names" {
+  description = "Map of all subnet names from spoke deployment"
+  type        = map(string)
+  default     = {}
+}
+
+# Optional Components
+variable "log_analytics_workspace_id" {
+  description = "Log Analytics workspace resource ID"
   type        = string
   default     = ""
 }
 
-variable "tenant_id" {
-  description = "Azure AD tenant ID"
+variable "application_insights_id" {
+  description = "Application Insights resource ID"
   type        = string
   default     = ""
 }
 
-variable "environment" {
-  description = "Environment name (dev, test, prod)"
+# Legacy support for project_name (use repository_name instead)
+variable "project_name" {
+  description = "Name of the integration project (deprecated - use repository_name instead)"
   type        = string
-  default     = "dev"
-}
-
-variable "integration_purpose" {
-  description = "Purpose of this integration deployment"
-  type        = string
-  default     = "Additional resources"
+  default     = ""
 }
