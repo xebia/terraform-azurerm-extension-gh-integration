@@ -92,21 +92,25 @@ jobs:
 
     - name: Terraform Plan
       id: plan
-      run: terraform plan -var-file="spoke-outputs.tfvars" -no-color -input=false
-      continue-on-error: true
+      run: terraform plan -var-file="spoke-outputs.tfvars" -no-color -input=false -out=tfplan
 
     - name: Terraform Plan Status
-      if: steps.plan.outcome == 'failure'
-      run: exit 1
+      run: |
+        echo "Plan completed with status: $${{ steps.plan.outcome }}"
+        if [ "$${{ steps.plan.outcome }}" == "failure" ]; then
+          echo "❌ Terraform plan failed"
+          exit 1
+        else
+          echo "✅ Terraform plan succeeded"
+        fi
 
-    # TEMPORARILY COMMENTED OUT - Only testing the workflow flow without applying infrastructure
-    # - name: Terraform Apply
-    #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    #   run: terraform apply -var-file="spoke-outputs.tfvars" -auto-approve -input=false
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && steps.plan.outcome == 'success'
+      run: terraform apply tfplan
 
-    # - name: Terraform Output
-    #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    #   id: output
-    #   run: |
-    #     echo "Terraform outputs:"
-    #     terraform output -json
+    - name: Terraform Output
+      if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && steps.plan.outcome == 'success'
+      id: output
+      run: |
+        echo "Terraform outputs:"
+        terraform output -json
