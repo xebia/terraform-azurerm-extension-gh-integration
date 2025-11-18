@@ -87,21 +87,19 @@ resource "github_repository_file" "spoke_outputs_tfvars" {
   branch              = "main"
   file                = "spoke-outputs.tfvars"
   content             = local.spoke_outputs_tfvars_content
-  commit_message      = local.is_first_deployment ? "Add spoke configuration variables" : "chore: update spoke configuration variables from spoke deployment"
+  commit_message      = "Update spoke configuration variables from spoke deployment"
   commit_author       = "Terraform Automation"
   commit_email        = "terraform@automation.local"
   overwrite_on_create = true
 }
 
-# Create GitHub Actions workflow for deployment
+# Create GitHub Actions workflow for Terraform
 resource "github_repository_file" "workflow_terraform" {
-  count = local.is_first_deployment ? 1 : 0
-  
   repository          = data.github_repository.integration_repo.name
   branch              = "main"
   file                = ".github/workflows/terraform.yml"
   content             = local.terraform_workflow_content
-  commit_message      = "Add Terraform deployment workflow"
+  commit_message      = "Update Terraform workflow"
   commit_author       = "Terraform Automation"
   commit_email        = "terraform@automation.local"
   overwrite_on_create = true
@@ -126,8 +124,6 @@ resource "github_repository_file" "main_tf" {
 
 # Create variables.tf template for integration repository
 resource "github_repository_file" "variables_tf" {
-  count = local.is_first_deployment ? 1 : 0
-  
   repository          = data.github_repository.integration_repo.name
   branch              = "main"
   file                = "variables.tf"
@@ -135,13 +131,16 @@ resource "github_repository_file" "variables_tf" {
   commit_message      = "Add variables configuration"
   commit_author       = "Terraform Automation"
   commit_email        = "terraform@automation.local"
-  overwrite_on_create = true
+  overwrite_on_create = false
+
+  # Ignore content changes to preserve user customizations
+  lifecycle {
+    ignore_changes = [content, commit_message]
+  }
 }
 
 # Create outputs.tf template for integration repository
 resource "github_repository_file" "outputs_tf" {
-  count = local.is_first_deployment ? 1 : 0
-  
   repository          = data.github_repository.integration_repo.name
   branch              = "main"
   file                = "outputs.tf"
@@ -149,13 +148,16 @@ resource "github_repository_file" "outputs_tf" {
   commit_message      = "Add outputs configuration"
   commit_author       = "Terraform Automation"
   commit_email        = "terraform@automation.local"
-  overwrite_on_create = true
+  overwrite_on_create = false
+
+  # Ignore content changes to preserve user customizations
+  lifecycle {
+    ignore_changes = [content, commit_message]
+  }
 }
 
 # Create versions.tf template for integration repository
 resource "github_repository_file" "versions_tf" {
-  count = local.is_first_deployment ? 1 : 0
-  
   repository          = data.github_repository.integration_repo.name
   branch              = "main"
   file                = "versions.tf"
@@ -168,8 +170,6 @@ resource "github_repository_file" "versions_tf" {
 
 # Create providers.tf template for integration repository
 resource "github_repository_file" "providers_tf" {
-  count = local.is_first_deployment ? 1 : 0
-  
   repository          = data.github_repository.integration_repo.name
   branch              = "main"
   file                = "providers.tf"
@@ -182,8 +182,6 @@ resource "github_repository_file" "providers_tf" {
 
 # Create backend.tf template for integration repository
 resource "github_repository_file" "backend_tf" {
-  count = local.is_first_deployment ? 1 : 0
-  
   repository          = data.github_repository.integration_repo.name
   branch              = "main"
   file                = "backend.tf"
@@ -196,8 +194,6 @@ resource "github_repository_file" "backend_tf" {
 
 # Create README.md for integration repository
 resource "github_repository_file" "readme" {
-  count = local.is_first_deployment ? 1 : 0
-  
   repository          = data.github_repository.integration_repo.name
   branch              = "main"
   file                = "README.md"
@@ -205,5 +201,10 @@ resource "github_repository_file" "readme" {
   commit_message      = "Add README documentation"
   commit_author       = "Terraform Automation"
   commit_email        = "terraform@automation.local"
-  overwrite_on_create = true
+  overwrite_on_create = false
+
+  # Ignore content changes to preserve user customizations
+  lifecycle {
+    ignore_changes = [content, commit_message]
+  }
 }
