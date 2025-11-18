@@ -44,17 +44,7 @@ data "github_repository" "integration_repo" {
   name = coalesce(var.repository_name, var.project_name)
 }
 
-# Check if main.tf already exists to determine if this is first deployment or update
-data "github_repository_file" "existing_main_tf" {
-  repository = data.github_repository.integration_repo.name
-  branch     = "main"
-  file       = "main.tf"
-}
-
-# Determine if this is first deployment (main.tf doesn't exist) or update (main.tf exists)
 locals {
-  is_first_deployment = data.github_repository_file.existing_main_tf.content == null
-
   # Generate spoke-outputs.tfvars content using the template
   spoke_outputs_tfvars_content = templatestring(data.local_file.spoke_outputs_tfvars_template.content, {
     spoke_name                    = var.spoke_name
@@ -119,8 +109,6 @@ resource "github_repository_file" "workflow_terraform" {
 
 # Create main.tf template for integration repository
 resource "github_repository_file" "main_tf" {
-  count = local.is_first_deployment ? 1 : 0
-  
   repository          = data.github_repository.integration_repo.name
   branch              = "main"
   file                = "main.tf"
@@ -128,7 +116,12 @@ resource "github_repository_file" "main_tf" {
   commit_message      = "Add main Terraform configuration"
   commit_author       = "Terraform Automation"
   commit_email        = "terraform@automation.local"
-  overwrite_on_create = true
+  overwrite_on_create = false
+
+  # Always ignore content changes to preserve user customizations
+  lifecycle {
+    ignore_changes = [content, commit_message]
+  }
 }
 
 # Create variables.tf template for integration repository
