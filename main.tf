@@ -90,9 +90,12 @@ locals {
     ""
   )
   
-  actual_virtual_network_id = coalesce(
-    var.virtual_network_id != "" ? var.virtual_network_id : null,
-    try(var.spoke_outputs.virtual_network_id != "" ? var.spoke_outputs.virtual_network_id : null, null)
+  actual_virtual_network_id = try(
+    coalesce(
+      var.virtual_network_id != "" ? var.virtual_network_id : null,
+      var.spoke_outputs.virtual_network_id != "" ? var.spoke_outputs.virtual_network_id : null
+    ),
+    ""
   )
   
   actual_virtual_network_name = coalesce(
@@ -298,10 +301,12 @@ resource "github_actions_secret" "tf_state_resource_group" {
 resource "github_actions_secret" "tf_state_storage_account" {
   repository    = data.github_repository.integration_repo.name
   secret_name   = "TF_STATE_STORAGE_ACCOUNT"
-  plaintext_value = coalesce(
-    var.terraform_state_storage_account,
-    try(var.spoke_outputs.terraform_state_storage_account, ""),
-    ""
+  plaintext_value = try(
+    coalesce(
+      var.terraform_state_storage_account != "" ? var.terraform_state_storage_account : null,
+      var.spoke_outputs.terraform_state_storage_account != "" ? var.spoke_outputs.terraform_state_storage_account : null
+    ),
+    "terraform-state-${local.actual_spoke_name}"
   )
 }
 
