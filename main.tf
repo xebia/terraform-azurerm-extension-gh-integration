@@ -61,39 +61,45 @@ locals {
   )
   
   actual_spoke_resource_group_name = coalesce(
-    var.spoke_resource_group_name,
-    try(var.spoke_outputs.spoke_resource_group_name, ""),
-    ""
+    var.spoke_resource_group_name != "" ? var.spoke_resource_group_name : null,
+    try(var.spoke_outputs.spoke_resource_group_name != "" ? var.spoke_outputs.spoke_resource_group_name : null, null),
+    "${local.actual_spoke_name}-rg"
   )
   
   actual_spoke_location = coalesce(
-    var.spoke_location,
-    try(var.spoke_outputs.spoke_location, ""),
-    ""
+    var.spoke_location != "" ? var.spoke_location : null,
+    try(var.spoke_outputs.spoke_location != "" ? var.spoke_outputs.spoke_location : null, null),
+    "West Europe"
+  )
+
+  actual_environment = coalesce(
+    var.environment != "" ? var.environment : null,
+    try(var.spoke_outputs.environment != "" ? var.spoke_outputs.environment : null, null),
+    "dev"
   )
   
   actual_key_vault_id = coalesce(
-    var.key_vault_id,
-    try(var.spoke_outputs.key_vault_id, ""),
+    var.key_vault_id != "" ? var.key_vault_id : null,
+    try(var.spoke_outputs.key_vault_id != "" ? var.spoke_outputs.key_vault_id : null, null),
     ""
   )
   
   actual_key_vault_name = coalesce(
-    var.key_vault_name,
-    try(var.spoke_outputs.key_vault_name, ""),
+    var.key_vault_name != "" ? var.key_vault_name : null,
+    try(var.spoke_outputs.key_vault_name != "" ? var.spoke_outputs.key_vault_name : null, null),
     ""
   )
   
   actual_virtual_network_id = coalesce(
-    var.virtual_network_id,
-    try(var.spoke_outputs.virtual_network_id, ""),
+    var.virtual_network_id != "" ? var.virtual_network_id : null,
+    try(var.spoke_outputs.virtual_network_id != "" ? var.spoke_outputs.virtual_network_id : null, null),
     ""
   )
   
   actual_virtual_network_name = coalesce(
-    var.virtual_network_name,
-    try(var.spoke_outputs.virtual_network_name, ""),
-    ""
+    var.virtual_network_name != "" ? var.virtual_network_name : null,
+    try(var.spoke_outputs.virtual_network_name != "" ? var.spoke_outputs.virtual_network_name : null, null),
+    "${local.actual_spoke_name}-vnet"
   )
 
   # Repository name: use repository_name if provided, otherwise derive from spoke_name
@@ -122,7 +128,7 @@ locals {
 
   # Generate other template content
   main_tf_content = templatestring(data.local_file.main_tf_template.content, {
-    spoke_name = var.spoke_name
+    project_name = local.actual_spoke_name
   })
   
   variables_tf_content = data.local_file.variables_tf_template.content
@@ -130,12 +136,17 @@ locals {
   versions_tf_content = data.local_file.versions_tf_template.content
   providers_tf_content = data.local_file.providers_tf_template.content
   backend_tf_content = templatestring(data.local_file.backend_tf_template.content, {
-    spoke_name = var.spoke_name
-    subscription_id = var.subscription_id
+    spoke_name = local.actual_spoke_name
+    subscription_id = local.actual_subscription_id
   })
   readme_content = templatestring(data.local_file.readme_template.content, {
-    spoke_name = var.spoke_name
+    project_name = local.actual_spoke_name
+    spoke_name = local.actual_spoke_name
     repository_name = local.actual_repository_name
+    spoke_resource_group_name = local.actual_spoke_resource_group_name
+    spoke_location = local.actual_spoke_location
+    environment = local.actual_environment
+    timestamp = timestamp()
   })
   terraform_workflow_content = data.local_file.terraform_workflow_template.content
 }
