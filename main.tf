@@ -92,8 +92,7 @@ locals {
   
   actual_virtual_network_id = coalesce(
     var.virtual_network_id != "" ? var.virtual_network_id : null,
-    try(var.spoke_outputs.virtual_network_id != "" ? var.spoke_outputs.virtual_network_id : null, null),
-    ""
+    try(var.spoke_outputs.virtual_network_id != "" ? var.spoke_outputs.virtual_network_id : null, null)
   )
   
   actual_virtual_network_name = coalesce(
@@ -277,4 +276,68 @@ resource "github_repository_file" "readme" {
   lifecycle {
     ignore_changes = [content, commit_message]
   }
+}
+
+# Create GitHub Actions secrets for Terraform state backend
+resource "github_actions_secret" "gh_integration_token" {
+  repository    = data.github_repository.integration_repo.name
+  secret_name   = "GH_INTEGRATION_TOKEN"
+  plaintext_value = var.github_token
+}
+
+resource "github_actions_secret" "tf_state_resource_group" {
+  repository    = data.github_repository.integration_repo.name
+  secret_name   = "TF_STATE_RESOURCE_GROUP"
+  plaintext_value = coalesce(
+    var.terraform_state_resource_group,
+    try(var.spoke_outputs.terraform_state_resource_group, ""),
+    "rg-terraform-state"
+  )
+}
+
+resource "github_actions_secret" "tf_state_storage_account" {
+  repository    = data.github_repository.integration_repo.name
+  secret_name   = "TF_STATE_STORAGE_ACCOUNT"
+  plaintext_value = coalesce(
+    var.terraform_state_storage_account,
+    try(var.spoke_outputs.terraform_state_storage_account, ""),
+    ""
+  )
+}
+
+resource "github_actions_secret" "tf_state_container" {
+  repository    = data.github_repository.integration_repo.name
+  secret_name   = "TF_STATE_CONTAINER"
+  plaintext_value = coalesce(
+    var.terraform_state_container,
+    try(var.spoke_outputs.terraform_state_container, ""),
+    "tfstate"
+  )
+}
+
+# Create GitHub Actions variables for spoke outputs
+resource "github_actions_variable" "spoke_outputs" {
+  for_each = {
+    spoke_name              = "SPOKE_SPOKE_NAME"
+    subscription_id         = "SPOKE_SUBSCRIPTION_ID" 
+    resource_group_name     = "SPOKE_RESOURCE_GROUP_NAME"
+    location                = "SPOKE_LOCATION"
+    environment             = "SPOKE_ENVIRONMENT"
+    key_vault_name          = "SPOKE_KEY_VAULT_NAME"
+    storage_account_name    = "SPOKE_STORAGE_ACCOUNT_NAME"
+    subnet_id               = "SPOKE_SUBNET_ID"
+  }
+
+  repository    = data.github_repository.integration_repo.name
+  variable_name = each.value
+  value = lookup({
+    spoke_name              = local.actual_spoke_name
+    subscription_id         = local.actual_subscription_id
+    resource_group_name     = local.actual_spoke_resource_group_name
+    location                = local.actual_spoke_location
+    environment             = local.actual_environment
+    key_vault_name          = local.actual_key_vault_name
+    storage_account_name    = try(var.spoke_outputs.storage_account_name, "")
+    subnet_id               = try(var.spoke_outputs.subnet_id, "")
+  }, each.key, "")
 }

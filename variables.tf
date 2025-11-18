@@ -145,3 +145,22 @@ variable "application_insights_id" {
   type        = string
   default     = ""
 }
+
+# Terraform State Backend Configuration
+variable "terraform_state_resource_group" {
+  description = "Resource group containing Terraform state storage account"
+  type        = string
+  default     = ""
+}
+
+variable "terraform_state_storage_account" {
+  description = "Storage account name for Terraform state"
+  type        = string
+  default     = ""
+}
+
+variable "terraform_state_container" {
+  description = "Container name for Terraform state"
+  type        = string
+  default     = ""
+}
