@@ -41,27 +41,86 @@ data "local_file" "backend_tf_template" {
 # Get reference to existing GitHub repository (created by gh-repo extension)
 # This repository should already exist when this module is called
 data "github_repository" "integration_repo" {
-  name = coalesce(var.repository_name, var.project_name)
+  name = local.actual_repository_name
 }
 
 locals {
+  # Backwards compatibility: extract values from either new variables or legacy spoke_outputs
+  actual_spoke_name = coalesce(
+    var.spoke_name,
+    try(var.spoke_outputs.spoke_name, ""),
+    var.project_name,
+    ""
+  )
+  
+  actual_subscription_id = coalesce(
+    var.subscription_id,
+    var.azure_subscription_id,
+    try(var.spoke_outputs.subscription_id, ""),
+    ""
+  )
+  
+  actual_spoke_resource_group_name = coalesce(
+    var.spoke_resource_group_name,
+    try(var.spoke_outputs.spoke_resource_group_name, ""),
+    ""
+  )
+  
+  actual_spoke_location = coalesce(
+    var.spoke_location,
+    try(var.spoke_outputs.spoke_location, ""),
+    ""
+  )
+  
+  actual_key_vault_id = coalesce(
+    var.key_vault_id,
+    try(var.spoke_outputs.key_vault_id, ""),
+    ""
+  )
+  
+  actual_key_vault_name = coalesce(
+    var.key_vault_name,
+    try(var.spoke_outputs.key_vault_name, ""),
+    ""
+  )
+  
+  actual_virtual_network_id = coalesce(
+    var.virtual_network_id,
+    try(var.spoke_outputs.virtual_network_id, ""),
+    ""
+  )
+  
+  actual_virtual_network_name = coalesce(
+    var.virtual_network_name,
+    try(var.spoke_outputs.virtual_network_name, ""),
+    ""
+  )
+
+  # Repository name: use repository_name if provided, otherwise derive from spoke_name
+  actual_repository_name = coalesce(
+    var.repository_name,
+    "${local.actual_spoke_name}-repo",
+    var.project_name,
+    "integration-repo"
+  )
+
   # Generate spoke-outputs.tfvars content using the template
   spoke_outputs_tfvars_content = templatestring(data.local_file.spoke_outputs_tfvars_template.content, {
-    spoke_name                    = var.spoke_name
-    subscription_id              = var.subscription_id
-    spoke_resource_group_name    = var.spoke_resource_group_name
-    spoke_location               = var.spoke_location
-    key_vault_id                 = var.key_vault_id
-    key_vault_name               = var.key_vault_name
-    virtual_network_id           = var.virtual_network_id
-    virtual_network_name         = var.virtual_network_name
-    subnet_ids                   = var.subnet_ids
-    subnet_names                 = var.subnet_names
-    log_analytics_workspace_id   = var.log_analytics_workspace_id
-    application_insights_id      = var.application_insights_id
+    spoke_name                    = local.actual_spoke_name
+    subscription_id              = local.actual_subscription_id
+    spoke_resource_group_name    = local.actual_spoke_resource_group_name
+    spoke_location               = local.actual_spoke_location
+    key_vault_id                 = local.actual_key_vault_id
+    key_vault_name               = local.actual_key_vault_name
+    virtual_network_id           = local.actual_virtual_network_id
+    virtual_network_name         = local.actual_virtual_network_name
+    subnet_ids                   = try(var.spoke_outputs.subnet_ids, var.subnet_ids, {})
+    subnet_names                 = try(var.spoke_outputs.subnet_names, var.subnet_names, {})
+    log_analytics_workspace_id   = try(var.spoke_outputs.log_analytics_workspace_id, var.log_analytics_workspace_id, "")
+    application_insights_id      = try(var.spoke_outputs.application_insights_id, var.application_insights_id, "")
   })
 
-  # Generate other template content (only for first deployment)
+  # Generate other template content
   main_tf_content = templatestring(data.local_file.main_tf_template.content, {
     spoke_name = var.spoke_name
   })
@@ -76,7 +135,7 @@ locals {
   })
   readme_content = templatestring(data.local_file.readme_template.content, {
     spoke_name = var.spoke_name
-    repository_name = coalesce(var.repository_name, var.project_name)
+    repository_name = local.actual_repository_name
   })
   terraform_workflow_content = data.local_file.terraform_workflow_template.content
 }
