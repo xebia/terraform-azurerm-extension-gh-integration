@@ -37,14 +37,14 @@ subnet_names = {}
 %{ endif ~}
 
 # Log Analytics workspace configuration
-%{ if log_analytics_workspace_id != "" ~}
+%{ if log_analytics_workspace_id != null && log_analytics_workspace_id != "" ~}
 log_analytics_workspace_id  = "${log_analytics_workspace_id}"
 %{ else ~}
 log_analytics_workspace_id  = ""
 %{ endif ~}
 
 # Application Insights configuration  
-%{ if application_insights_id != "" ~}
+%{ if application_insights_id != null && application_insights_id != "" ~}
 application_insights_id      = "${application_insights_id}"
 %{ else ~}
 application_insights_id      = ""
