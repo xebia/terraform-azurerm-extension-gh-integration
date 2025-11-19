@@ -16,6 +16,9 @@ environment                  = "${environment}"
 key_vault_id                 = "${key_vault_id}"
 key_vault_name               = "${key_vault_name}"
 
+# Storage Account configuration (use spoke storage for integrations)
+storage_account_name         = "${storage_account_name}"
+
 # Virtual Network configuration  
 virtual_network_id           = "${virtual_network_id}"
 virtual_network_name         = "${virtual_network_name}"

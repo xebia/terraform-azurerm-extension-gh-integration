@@ -16,6 +16,11 @@ module "integration_resources" {
   environment              = "${environment}"
   integration_purpose      = "${integration_purpose}"
 
+  # Use spoke storage account and key vault (reduces resource duplication)
+  spoke_storage_account_name = "${storage_account_name}"
+  spoke_key_vault_id        = "${key_vault_id}"  
+  spoke_key_vault_name      = "${key_vault_name}"
+
   # Network configuration - dual subnet approach for private spoke deployment
   spoke_pe_subnet_id = length(${jsonencode(subnet_ids)}) > 0 ? lookup(${jsonencode(subnet_ids)}, "${spoke_name}-pe", lookup(${jsonencode(subnet_ids)}, "snet-${spoke_name}-pe", "")) : ""
   spoke_integration_subnet_id = length(${jsonencode(subnet_ids)}) > 0 ? lookup(${jsonencode(subnet_ids)}, "${spoke_name}-integration", lookup(${jsonencode(subnet_ids)}, "snet-${spoke_name}-integration", "")) : ""

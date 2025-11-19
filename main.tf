@@ -127,6 +127,7 @@ locals {
     spoke_location               = local.actual_spoke_location
     key_vault_id                 = local.actual_key_vault_id
     key_vault_name               = local.actual_key_vault_name
+    storage_account_name         = try(var.spoke_outputs.storage_account_name, "")
     virtual_network_id           = local.actual_virtual_network_id
     virtual_network_name         = local.actual_virtual_network_name
     subnet_ids                   = try(var.spoke_outputs.subnet_ids, var.subnet_ids, {})
@@ -149,6 +150,9 @@ locals {
     subnet_ids                   = try(var.spoke_outputs.subnet_ids, var.subnet_ids, {})
     spoke_virtual_networks       = try(var.spoke_outputs.spoke_virtual_networks, {})
     spoke_subnets               = try(var.spoke_outputs.spoke_subnets, {})
+    storage_account_name         = try(var.spoke_outputs.storage_account_name, "")
+    key_vault_id                 = local.actual_key_vault_id
+    key_vault_name               = local.actual_key_vault_name
   })
   
   variables_tf_content = data.local_file.variables_tf_template.content
