@@ -2,6 +2,12 @@
 
 This extension automatically creates and configures GitHub repositories for integration deployments. It supports two operational modes: full repository setup for new integrations and spoke-outputs auto-update for maintaining synchronization with spoke changes.
 
+## Quick Setup
+
+1. **Use this extension** to create an integration repository
+2. **Configure GitHub Actions** following the [GitHub Actions Setup Guide](GITHUB_ACTIONS_SETUP.md)
+3. **Deploy your integration** using the generated Terraform configuration
+
 ## Purpose
 
 This extension is used by the spoke deployment system to:
@@ -157,6 +163,32 @@ The extension uses template files to generate repository content:
 - `main.tfvars.tpl` - Complete spoke-outputs template for full setup
 - `spoke-outputs-update.tfvars.tpl` - Minimal template for auto-update mode
 - `main.tf.tpl`, `variables.tf.tpl`, etc. - Terraform configuration templates
+
+## GitHub Actions Configuration
+
+After the repository is created, you need to configure GitHub Actions for automated deployments:
+
+1. **Follow the setup guide**: [GitHub Actions Setup](GITHUB_ACTIONS_SETUP.md)
+2. **Configure variables**: Add Terraform state backend configuration as variables for debugging visibility
+3. **Configure secrets**: Add Azure authentication credentials as secrets for security
+4. **Test deployment**: Push changes to trigger the automated workflow
+
+The generated repository includes a complete GitHub Actions workflow (`terraform.yml`) that automatically:
+- Validates Terraform configuration
+- Plans infrastructure changes  
+- Applies changes on main branch
+- Provides detailed debugging output for troubleshooting
+
+## Troubleshooting
+
+### Common Issues
+
+1. **DNS lookup failures for storage accounts**: Check the `TF_STATE_STORAGE_ACCOUNT` variable value
+2. **Authentication errors**: Verify Azure credentials in repository secrets
+3. **Missing subnet data**: Ensure spoke deployment has completed successfully
+4. **Template variable substitution**: Check GitHub Actions workflow logs for detailed debug output
+
+See the [GitHub Actions Setup Guide](GITHUB_ACTIONS_SETUP.md) for detailed troubleshooting steps.
 
 ## Related Documentation
 

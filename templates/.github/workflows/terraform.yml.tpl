@@ -61,28 +61,32 @@ jobs:
     - name: Debug Backend Configuration
       run: |
         echo "Backend configuration:"
-        echo "Resource Group: [redacted for security]"
-        echo "Storage Account: [redacted for security]"  
-        echo "Container: $${{ secrets.TF_STATE_CONTAINER }}"
+        echo "Resource Group: $${{ vars.TF_STATE_RESOURCE_GROUP }}"
+        echo "Storage Account: $${{ vars.TF_STATE_STORAGE_ACCOUNT }}"  
+        echo "Container: $${{ vars.TF_STATE_CONTAINER }}"
         echo "Key: ${spoke_name}-integration.tfstate"
-        # Check if secrets are properly set (without revealing values)
-        if [ -z "$${{ secrets.TF_STATE_RESOURCE_GROUP }}" ]; then
-          echo "ERROR: TF_STATE_RESOURCE_GROUP is empty!"
+        # Check if variables are properly set
+        if [ -z "$${{ vars.TF_STATE_RESOURCE_GROUP }}" ]; then
+          echo "ERROR: TF_STATE_RESOURCE_GROUP variable is not set!"
           exit 1
         fi
-        if [ -z "$${{ secrets.TF_STATE_STORAGE_ACCOUNT }}" ]; then
-          echo "ERROR: TF_STATE_STORAGE_ACCOUNT is empty!"
+        if [ -z "$${{ vars.TF_STATE_STORAGE_ACCOUNT }}" ]; then
+          echo "ERROR: TF_STATE_STORAGE_ACCOUNT variable is not set!"
           exit 1
         fi
-        echo "All backend configuration secrets are properly set"
+        if [ -z "$${{ vars.TF_STATE_CONTAINER }}" ]; then
+          echo "ERROR: TF_STATE_CONTAINER variable is not set!"
+          exit 1
+        fi
+        echo "All backend configuration variables are properly set"
 
     - name: Terraform Init
       id: init
       run: |
         terraform init \
-          -backend-config="resource_group_name=$${{ secrets.TF_STATE_RESOURCE_GROUP }}" \
-          -backend-config="storage_account_name=$${{ secrets.TF_STATE_STORAGE_ACCOUNT }}" \
-          -backend-config="container_name=$${{ secrets.TF_STATE_CONTAINER }}" \
+          -backend-config="resource_group_name=$${{ vars.TF_STATE_RESOURCE_GROUP }}" \
+          -backend-config="storage_account_name=$${{ vars.TF_STATE_STORAGE_ACCOUNT }}" \
+          -backend-config="container_name=$${{ vars.TF_STATE_CONTAINER }}" \
           -backend-config="key=${spoke_name}-integration.tfstate" \
           -backend-config="use_azuread_auth=true"
 
