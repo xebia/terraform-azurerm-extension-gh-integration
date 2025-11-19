@@ -66,3 +66,57 @@ variable "spoke_subnets" {
   }))
   default = []
 }
+
+# Additional variables for enhanced spoke integration
+variable "subnet_ids" {
+  description = "Map of subnet IDs from spoke deployment"
+  type        = map(string)
+  default     = {}
+}
+
+variable "subnet_names" {
+  description = "Map of subnet names from spoke deployment"
+  type        = map(string)
+  default     = {}
+}
+
+variable "virtual_network_id" {
+  description = "Virtual network resource ID from spoke deployment"
+  type        = string
+  default     = ""
+}
+
+variable "virtual_network_name" {
+  description = "Virtual network name from spoke deployment"
+  type        = string
+  default     = ""
+}
+
+variable "key_vault_id" {
+  description = "Key Vault resource ID from spoke deployment"
+  type        = string
+  default     = ""
+}
+
+variable "key_vault_name" {
+  description = "Key Vault name from spoke deployment"
+  type        = string
+  default     = ""
+}
+
+variable "log_analytics_workspace_id" {
+  description = "Log Analytics workspace resource ID from spoke deployment"
+  type        = string
+  default     = ""
+}
+
+variable "application_insights_id" {
+  description = "Application Insights resource ID from spoke deployment"
+  type        = string
+  default     = ""
+}
+
+variable "subscription_id" {
+  description = "Azure subscription ID"
+  type        = string
+}
