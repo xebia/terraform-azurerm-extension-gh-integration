@@ -63,6 +63,10 @@ locals {
   actual_spoke_resource_group_name = coalesce(
     var.spoke_resource_group_name != "" ? var.spoke_resource_group_name : null,
     try(var.spoke_outputs.spoke_resource_group_name != "" ? var.spoke_outputs.spoke_resource_group_name : null, null),
+    # Try to get resource group name from spoke outputs in different possible formats
+    try(var.spoke_outputs.resourcegroup.weu.resResourceGroup.name, null),
+    try(var.spoke_outputs.resource_group_name, null),
+    try(var.spoke_outputs.rg_name, null),
     "${local.actual_spoke_name}-rg"
   )
   
