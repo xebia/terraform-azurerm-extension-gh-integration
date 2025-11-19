@@ -285,27 +285,28 @@ resource "github_repository_file" "readme" {
   }
 }
 
-# Create GitHub Actions secrets for Terraform state backend
+# Create GitHub Actions secrets for sensitive authentication data
 resource "github_actions_secret" "gh_integration_token" {
   repository    = data.github_repository.integration_repo.name
   secret_name   = "GH_INTEGRATION_TOKEN"
   plaintext_value = var.github_token
 }
 
-resource "github_actions_secret" "tf_state_resource_group" {
+# Create GitHub Actions variables for Terraform state backend (for debugging visibility)
+resource "github_actions_variable" "tf_state_resource_group" {
   repository    = data.github_repository.integration_repo.name
-  secret_name   = "TF_STATE_RESOURCE_GROUP"
-  plaintext_value = coalesce(
+  variable_name = "TF_STATE_RESOURCE_GROUP"
+  value = coalesce(
     var.terraform_state_resource_group,
     try(var.spoke_outputs.terraform_state_resource_group, ""),
     "rg-terraform-state"
   )
 }
 
-resource "github_actions_secret" "tf_state_storage_account" {
+resource "github_actions_variable" "tf_state_storage_account" {
   repository    = data.github_repository.integration_repo.name
-  secret_name   = "TF_STATE_STORAGE_ACCOUNT"
-  plaintext_value = try(
+  variable_name = "TF_STATE_STORAGE_ACCOUNT"
+  value = try(
     coalesce(
       var.terraform_state_storage_account != "" ? var.terraform_state_storage_account : null,
       var.spoke_outputs.terraform_state_storage_account != "" ? var.spoke_outputs.terraform_state_storage_account : null
@@ -314,10 +315,10 @@ resource "github_actions_secret" "tf_state_storage_account" {
   )
 }
 
-resource "github_actions_secret" "tf_state_container" {
+resource "github_actions_variable" "tf_state_container" {
   repository    = data.github_repository.integration_repo.name
-  secret_name   = "TF_STATE_CONTAINER"
-  plaintext_value = coalesce(
+  variable_name = "TF_STATE_CONTAINER"
+  value = coalesce(
     var.terraform_state_container,
     try(var.spoke_outputs.terraform_state_container, ""),
     "tfstate"
