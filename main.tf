@@ -150,7 +150,11 @@ locals {
     environment = local.actual_environment
     timestamp = timestamp()
   })
-  terraform_workflow_content = data.local_file.terraform_workflow_template.content
+  terraform_workflow_content = templatestring(data.local_file.terraform_workflow_template.content, {
+    project_name = local.actual_spoke_name
+    spoke_name = local.actual_spoke_name
+    environment = local.actual_environment
+  })
 }
 
 # Create spoke-outputs.tfvars file content for integration repository
