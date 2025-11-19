@@ -124,8 +124,8 @@ locals {
     virtual_network_name         = local.actual_virtual_network_name
     subnet_ids                   = try(var.spoke_outputs.subnet_ids, var.subnet_ids, {})
     subnet_names                 = try(var.spoke_outputs.subnet_names, var.subnet_names, {})
-    log_analytics_workspace_id   = coalesce(var.spoke_outputs.log_analytics_workspace_id, var.log_analytics_workspace_id, "")
-    application_insights_id      = coalesce(var.spoke_outputs.application_insights_id, var.application_insights_id, "")
+    log_analytics_workspace_id   = try(coalesce(var.spoke_outputs.log_analytics_workspace_id, var.log_analytics_workspace_id), var.log_analytics_workspace_id, "")
+    application_insights_id      = try(coalesce(var.spoke_outputs.application_insights_id, var.application_insights_id), var.application_insights_id, "")
   })
 
   # Generate other template content
