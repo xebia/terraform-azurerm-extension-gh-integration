@@ -308,19 +308,18 @@ resource "github_actions_variable" "tf_state_resource_group" {
   value = coalesce(
     var.terraform_state_resource_group,
     try(var.spoke_outputs.terraform_state_resource_group, ""),
-    "rg-terraform-state"
+    local.actual_spoke_resource_group_name
   )
 }
 
 resource "github_actions_variable" "tf_state_storage_account" {
   repository    = data.github_repository.integration_repo.name
   variable_name = "TF_STATE_STORAGE_ACCOUNT"
-  value = try(
-    coalesce(
-      var.terraform_state_storage_account != "" ? var.terraform_state_storage_account : null,
-      var.spoke_outputs.terraform_state_storage_account != "" ? var.spoke_outputs.terraform_state_storage_account : null
-    ),
-    "terraform-state-${local.actual_spoke_name}"
+  value = coalesce(
+    var.terraform_state_storage_account != "" ? var.terraform_state_storage_account : null,
+    try(var.spoke_outputs.terraform_state_storage_account, ""),
+    try(var.spoke_outputs.storage_account_name, ""),
+    "stterraformstate${replace(local.actual_spoke_name, "-", "")}"
   )
 }
 
