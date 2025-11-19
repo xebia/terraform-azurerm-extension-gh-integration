@@ -11,9 +11,16 @@ output "integration_info" {
 }
 
 # Function App outputs (if any function apps are deployed)
-output "function_app_info" {
+output "function_apps" {
   description = "Function App deployment information"
-  value = module.integration_resources.function_app_info
+  value = module.integration_resources.function_apps
+  sensitive = false
+}
+
+# Service Plan outputs
+output "service_plans" {
+  description = "App Service Plan deployment information"  
+  value = module.integration_resources.service_plans
   sensitive = false
 }
 
@@ -33,8 +40,20 @@ output "network_config" {
 output "key_vault_info" {
   description = "Key Vault configuration from spoke"
   value = {
-    key_vault_id = var.key_vault_id
-    key_vault_name = var.key_vault_name
+    spoke_key_vault_id = var.key_vault_id
+    spoke_key_vault_name = var.key_vault_name
+    integration_key_vault_id = module.integration_resources.key_vault_id
+    integration_key_vault_uri = module.integration_resources.key_vault_uri
+  }
+  sensitive = false
+}
+
+# Storage outputs
+output "storage_info" {
+  description = "Storage account information"
+  value = {
+    storage_account_name = module.integration_resources.storage_account_name
+    storage_account_id = module.integration_resources.storage_account_id
   }
   sensitive = false
 }

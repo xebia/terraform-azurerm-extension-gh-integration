@@ -130,7 +130,16 @@ locals {
 
   # Generate other template content
   main_tf_content = templatestring(data.local_file.main_tf_template.content, {
-    project_name = local.actual_spoke_name
+    project_name                  = local.actual_spoke_name
+    spoke_name                   = local.actual_spoke_name
+    spoke_resource_group_name    = local.actual_spoke_resource_group_name
+    spoke_location               = local.actual_spoke_location
+    spoke_tags                   = try(var.spoke_outputs.spoke_tags, {})
+    environment                  = local.actual_environment
+    integration_purpose          = "spoke-integration"
+    subnet_ids                   = try(var.spoke_outputs.subnet_ids, var.subnet_ids, {})
+    spoke_virtual_networks       = try(var.spoke_outputs.spoke_virtual_networks, {})
+    spoke_subnets               = try(var.spoke_outputs.spoke_subnets, {})
   })
   
   variables_tf_content = data.local_file.variables_tf_template.content
