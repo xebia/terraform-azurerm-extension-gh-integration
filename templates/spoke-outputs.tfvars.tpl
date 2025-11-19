@@ -8,6 +8,10 @@ subscription_id              = "${subscription_id}"
 spoke_resource_group_name    = "${spoke_resource_group_name}"
 spoke_location               = "${spoke_location}"
 
+# Azure configuration
+tenant_id                    = "${tenant_id}"
+environment                  = "${environment}"
+
 # Key Vault configuration
 key_vault_id                 = "${key_vault_id}"
 key_vault_name               = "${key_vault_name}"

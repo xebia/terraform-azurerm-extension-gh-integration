@@ -1,6 +1,9 @@
 # Integration Module
 # This module creates GitHub repositories with integration workflows and passes spoke data
 
+# Get current Azure client configuration
+data "azurerm_client_config" "current" {}
+
 # Data sources to read template files from local templates directory
 data "local_file" "main_tf_template" {
   filename = "${path.module}/templates/main.tf.tpl"
@@ -130,6 +133,8 @@ locals {
     subnet_names                 = try(var.spoke_outputs.subnet_names, var.subnet_names, {})
     log_analytics_workspace_id   = try(coalesce(var.spoke_outputs.log_analytics_workspace_id, var.log_analytics_workspace_id), var.log_analytics_workspace_id, "")
     application_insights_id      = try(coalesce(var.spoke_outputs.application_insights_id, var.application_insights_id), var.application_insights_id, "")
+    tenant_id                    = data.azurerm_client_config.current.tenant_id
+    environment                  = local.actual_environment
   })
 
   # Generate other template content
