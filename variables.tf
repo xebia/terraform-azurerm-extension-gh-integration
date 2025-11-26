@@ -1,85 +1,45 @@
 # Variables for Integration Module
 
-# Azure Configuration
-variable "azure_tenant_id" {
-  description = "The Azure tenant ID"
+# Repository Configuration
+variable "repository_name" {
+  description = "Name of the integration repository"
   type        = string
+  default     = ""
 }
 
-variable "azure_subscription_id" {
-  description = "The Azure subscription ID"
+variable "repository_description" {
+  description = "Description of the integration repository"
   type        = string
+  default     = ""
 }
 
-variable "service_principal_client_id" {
-  description = "The client ID of the Azure service principal"
-  type        = string
-}
-
-# GitHub Configuration
-variable "github_organization" {
-  description = "The GitHub organization name"
-  type        = string
-}
-
-variable "github_token" {
-  description = "GitHub Personal Access Token"
-  type        = string
-  sensitive   = true
-}
-
-variable "github_oidc_issuer" {
-  description = "The GitHub OIDC issuer URL"
-  type        = string
-  default     = "https://token.actions.githubusercontent.com"
-}
-
-# Project Configuration
 variable "project_name" {
-  description = "Name of the integration project (will be used as repository name)"
+  description = "Name of the integration project"
   type        = string
+  default     = ""
 }
 
-# Spoke Outputs - All data from the spoke deployment
-variable "spoke_outputs" {
-  description = "All outputs from the spoke deployment to be passed to integration repository"
-  type        = any
-  default     = {}
-}
-
-# Integration Resource Variables (extracted from spoke_outputs for direct resource creation)
+# Spoke Configuration
 variable "spoke_name" {
-  description = "The name of the spoke deployment"
+  description = "Name of the spoke deployment"
+  type        = string
+  default     = ""
+}
+
+variable "subscription_id" {
+  description = "Azure subscription ID"
   type        = string
   default     = ""
 }
 
 variable "spoke_resource_group_name" {
-  description = "The resource group name from the spoke deployment"
+  description = "Spoke resource group name"
   type        = string
   default     = ""
 }
 
 variable "spoke_location" {
-  description = "The location of the spoke deployment"
-  type        = string
-  default     = "West Europe"
-}
-
-variable "spoke_tags" {
-  description = "Tags from the spoke deployment"
-  type        = map(string)
-  default     = {}
-}
-
-variable "spoke_subnet_id" {
-  description = "Subnet ID from the spoke deployment for private endpoints"
-  type        = string
-  default     = ""
-}
-
-variable "tenant_id" {
-  description = "Azure AD tenant ID"
+  description = "Spoke location"
   type        = string
   default     = ""
 }
@@ -87,11 +47,150 @@ variable "tenant_id" {
 variable "environment" {
   description = "Environment name (dev, test, prod)"
   type        = string
-  default     = "dev"
+  default     = ""
 }
 
-variable "integration_purpose" {
-  description = "Purpose of this integration deployment"
+# Key Vault Configuration
+variable "key_vault_id" {
+  description = "Key Vault resource ID"
   type        = string
-  default     = "Additional resources"
+  default     = ""
+}
+
+variable "key_vault_name" {
+  description = "Key Vault name"
+  type        = string
+  default     = ""
+}
+
+# Virtual Network Configuration
+variable "virtual_network_id" {
+  description = "Virtual network resource ID"
+  type        = string
+  default     = ""
+}
+
+variable "virtual_network_name" {
+  description = "Virtual network name"
+  type        = string
+  default     = ""
+}
+
+# Legacy spoke deployment compatibility variables
+variable "github_organization" {
+  description = "GitHub organization name (legacy)"
+  type        = string
+  default     = ""
+}
+
+variable "github_token" {
+  description = "GitHub token (legacy)"
+  type        = string
+  default     = ""
+}
+
+variable "azure_tenant_id" {
+  description = "Azure tenant ID (legacy)"
+  type        = string
+  default     = ""
+}
+
+variable "azure_subscription_id" {
+  description = "Azure subscription ID (legacy)"
+  type        = string
+  default     = ""
+}
+
+variable "service_principal_client_id" {
+  description = "Service principal client ID (legacy)"
+  type        = string
+  default     = ""
+}
+
+variable "github_oidc_issuer" {
+  description = "GitHub OIDC issuer (legacy)"
+  type        = string
+  default     = ""
+}
+
+variable "spoke_outputs" {
+  description = "Spoke outputs (legacy)"
+  type        = any
+  default     = {}
+}
+
+# Subnet Configuration - ALL subnets from spoke (user chooses in main.tf)
+variable "subnet_ids" {
+  description = "Map of all subnet IDs from spoke deployment"
+  type        = map(string)
+  default     = {}
+}
+
+variable "subnet_names" {
+  description = "Map of all subnet names from spoke deployment"
+  type        = map(string)
+  default     = {}
+}
+
+# Optional Components
+variable "log_analytics_workspace_id" {
+  description = "Log Analytics workspace resource ID"
+  type        = string
+  default     = ""
+}
+
+variable "application_insights_id" {
+  description = "Application Insights resource ID"
+  type        = string
+  default     = ""
+}
+
+# Terraform State Backend Configuration
+variable "terraform_state_resource_group" {
+  description = "Resource group containing Terraform state storage account"
+  type        = string
+  default     = ""
+}
+
+variable "terraform_state_storage_account" {
+  description = "Storage account name for Terraform state"
+  type        = string
+  default     = ""
+}
+
+variable "terraform_state_container" {
+  description = "Container name for Terraform state"
+  type        = string
+  default     = ""
+}
+
+variable "github_repository_name" {
+  description = "Name of the GitHub repository to use for integration files and secrets."
+  type        = string
+}
+
+variable "spoke_config" {
+  description = "Dummy object for template rendering"
+  type = object({
+    name                  = string
+    resource_group_name   = string
+    location              = string
+    tenant_id             = string
+    environment           = string
+    storage_account_name  = string
+    key_vault_id          = string
+    key_vault_name        = string
+    pe_subnet_id          = string
+  })
+  default = {
+    name                  = "dummy"
+    resource_group_name   = "dummy"
+    location              = "dummy"
+    tenant_id             = "dummy"
+    environment           = "dummy"
+    storage_account_name  = "dummy"
+    key_vault_id          = "dummy"
+    key_vault_name        = "dummy"
+    pe_subnet_id          = "dummy"
+  }
 }

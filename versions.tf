@@ -5,21 +5,19 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 3.0"
+      version = "4.14.0"
     }
     azuread = {
       source  = "hashicorp/azuread"
-      version = "~> 2.0"
+      version = "3.0.2"
     }
     github = {
       source  = "integrations/github"
       version = "~> 6.0"
     }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.0"
+    }
   }
-}
-
-# Configure the GitHub provider
-provider "github" {
-  owner = var.github_organization
-  token = var.github_token
 }
