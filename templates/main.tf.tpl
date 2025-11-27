@@ -23,6 +23,6 @@ module "integration_resources" {
     virtual_network_name       = var.spoke_config.virtual_network_name
     tags                       = var.spoke_config.tags
     log_analytics_workspace_id = var.spoke_config.log_analytics_workspace_id
-    application_insights_id    = var.spoke_config.application_insights_id
+    log_analytics_workspace_name = var.spoke_config.log_analytics_workspace_name
   }
 }

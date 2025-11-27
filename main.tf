@@ -135,7 +135,7 @@ locals {
     subnet_ids                 = try(var.spoke_outputs.subnet_ids, var.subnet_ids, {})
     subnet_names               = try(var.spoke_outputs.subnet_names, var.subnet_names, {})
     log_analytics_workspace_id = try(coalesce(var.spoke_outputs.log_analytics_workspace_id, var.log_analytics_workspace_id), var.log_analytics_workspace_id, "")
-    application_insights_id    = try(coalesce(var.spoke_outputs.application_insights_id, var.application_insights_id), var.application_insights_id, "")
+    log_analytics_workspace_name = try(coalesce(var.spoke_outputs.log_analytics_workspace_name, var.log_analytics_workspace_name), var.log_analytics_workspace_name, "")
     tenant_id                  = data.azurerm_client_config.current.tenant_id
     environment                = local.actual_environment
   })

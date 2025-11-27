@@ -20,6 +20,6 @@ variable "spoke_config" {
     subnet_ids           = map(string)
     subnet_names         = map(string)
     log_analytics_workspace_id  = string
-    application_insights_id     = string
+    log_analytics_workspace_name = string
   })
 }

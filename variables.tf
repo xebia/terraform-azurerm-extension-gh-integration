@@ -139,10 +139,10 @@ variable "log_analytics_workspace_id" {
   default     = ""
 }
 
-variable "application_insights_id" {
-  description = "Application Insights resource ID"
-  type        = string
-  default     = ""
+variable "log_analytics_workspace_name" {
+  description = "Log Analytics workspace resource name"
+  type = string
+  default = ""
 }
 
 # Terraform State Backend Configuration
