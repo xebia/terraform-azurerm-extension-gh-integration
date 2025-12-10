@@ -5,7 +5,7 @@ data "azurerm_client_config" "this" {}
 
 # Use the integration resources module to create additional resources
 module "integration_resources" {
-  source = var.integration_module_source
+  source = "${integration_module_source}"
 
   # Main spoke prams from the spoke creation output.
   spoke_config = {
