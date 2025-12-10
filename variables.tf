@@ -194,3 +194,9 @@ variable "spoke_config" {
     pe_subnet_id         = "dummy"
   }
 }
+
+variable "integration_module_source" {
+  description = "Source of the integration module"
+  type        = string
+  default     = "git::https://github.com/xebia/terraform-azurerm-integration-resources.git?ref=main"
+}

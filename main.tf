@@ -142,9 +142,10 @@ locals {
 
   # Generate other template content
   main_tf_content = templatestring(data.local_file.main_tf_template.content, {
-    spoke_config = var.spoke_config
-    project_name = local.actual_spoke_name
-    path         = path.module
+    spoke_config              = var.spoke_config
+    project_name              = local.actual_spoke_name
+    integration_module_source = var.integration_module_source
+    path                      = path.module
   })
 
   variables_tf_content = data.local_file.variables_tf_template.content

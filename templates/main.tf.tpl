@@ -5,7 +5,7 @@ data "azurerm_client_config" "this" {}
 
 # Use the integration resources module to create additional resources
 module "integration_resources" {
-  source = "git::https://xebia-partner-dr.ghe.com/xms-landingzone-demo/terraform-azurerm-integration-resources.git?ref=fixes/functions"
+  source = "${integration_module_source}"
 
   # Main spoke prams from the spoke creation output.
   spoke_config = {
