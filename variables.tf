@@ -204,4 +204,5 @@ variable "integration_module_source" {
 variable "default_runner_label" {
   description = "Default label for GitHub Actions self-hosted runners"
   type        = string
+  default     = "ubuntu24-prod"
 }
