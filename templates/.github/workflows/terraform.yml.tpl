@@ -50,10 +50,9 @@ jobs:
       shell: bash
       env:
         GITHUB_TOKEN: $${{ secrets.GH_INTEGRATION_TOKEN }}
-        SERVER_URL: $${{ github.server_url }}
       run: |
         # Replace :// with ://<token>@ to include the token in the URL
-        git config --global url."$${SERVER_URL/:\/\//://$GITHUB_TOKEN@}/".insteadOf "$SERVER_URL/"
+        git config --global url."$${GITHUB_SERVER_URL/:\/\//://$GITHUB_TOKEN@}/".insteadOf "$GITHUB_SERVER_URL/"
 
     - name: Terraform Format Check
       id: fmt
