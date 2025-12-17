@@ -48,10 +48,13 @@ jobs:
         subscription-id: $${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     - name: Configure Git for private module access
+      shell: bash
+      env:
+        GITHUB_TOKEN: $${{ secrets.GH_INTEGRATION_TOKEN }}
+        SERVER_URL: $${{ github.server_url }}
       run: |
-        git config --global url."https://$${{ secrets.GH_INTEGRATION_TOKEN }}@xebia-partner-dr.ghe.com/".insteadOf "https://xebia-partner-dr.ghe.com/"
-        git config --global user.email "terraform@automation.local"
-        git config --global user.name "Terraform Automation"
+        # Replace :// with ://<token>@ to include the token in the URL
+        git config --global url."$${SERVER_URL/:\/\//://$GITHUB_TOKEN@}/".insteadOf "$SERVER_URL/"
 
     - name: Terraform Format Check
       id: fmt
