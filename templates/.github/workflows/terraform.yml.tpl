@@ -1,13 +1,6 @@
 name: Terraform Deploy - ${project_name}
 
-on:
-  workflow_dispatch:
-    inputs:
-      runner:
-        description: "Specify the runner to use"
-        required: false
-        default: ""
-        type: string
+on: workflow_dispatch
 
 permissions:
   id-token: write
@@ -23,7 +16,7 @@ env:
 jobs:
   terraform:
     name: 'Terraform'
-    runs-on: $${{ github.event_name == 'workflow_dispatch' && inputs.runner || 'ubuntu24-prod' }}
+    runs-on: '${runner_label}'
     environment: ${environment}
 
     defaults:

@@ -200,3 +200,8 @@ variable "integration_module_source" {
   type        = string
   default     = "git::https://github.com/xebia/terraform-azurerm-integration-resources.git?ref=main"
 }
+
+variable "default_runner_label" {
+  description = "Default label for GitHub Actions self-hosted runners"
+  type        = string
+}
