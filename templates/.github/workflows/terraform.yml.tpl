@@ -3,10 +3,10 @@ name: Terraform Deploy - ${project_name}
 on:
   workflow_dispatch:
     inputs:
-      runnerGroup:
-        description: "Specify the runner group to use"
+      runner:
+        description: "Specify the runner to use"
         required: false
-        default: "XMMSRunnerGroup"
+        default: ""
         type: string
 
 permissions:
@@ -23,8 +23,7 @@ env:
 jobs:
   terraform:
     name: 'Terraform'
-    runs-on:
-      group: $${{ github.event_name == 'workflow_dispatch' && inputs.runnerGroup || 'XMMSRunnerGroup' }}
+    runs-on: $${{ github.event_name == 'workflow_dispatch' && inputs.runner || 'ubuntu24-prod' }}
     environment: ${environment}
 
     defaults:
