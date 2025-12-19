@@ -46,10 +46,17 @@ jobs:
         client-id: $${{ secrets.AZURE_CLIENT_ID }}
         tenant-id: $${{ secrets.AZURE_TENANT_ID }}
         subscription-id: $${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    
+    - name: Set BASE_URL for GH Enterprise
+      shell: bash
+      run: |
+        BASE_URL="${GITHUB_SERVER_URL#https://}"
+        BASE_URL="${BASE_URL%/}/"
+        echo "BASE_URL=$BASE_URL" >> $GITHUB_ENV
 
     - name: Configure Git for private module access
       run: |
-        git config --global url."https://$${{ secrets.GH_INTEGRATION_TOKEN }}@xebia-partner-dr.ghe.com/".insteadOf "https://xebia-partner-dr.ghe.com/"
+        git config --global url."https://${{ secrets.GH_INTEGRATION_TOKEN }}@${BASE_URL}".insteadOf "https://${BASE_URL}"
         git config --global user.email "terraform@automation.local"
         git config --global user.name "Terraform Automation"
 
