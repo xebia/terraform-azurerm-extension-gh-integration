@@ -141,8 +141,8 @@ variable "log_analytics_workspace_id" {
 
 variable "log_analytics_workspace_name" {
   description = "Log Analytics workspace resource name"
-  type = string
-  default = ""
+  type        = string
+  default     = ""
 }
 
 # Terraform State Backend Configuration
@@ -172,26 +172,26 @@ variable "github_repository_name" {
 variable "spoke_config" {
   description = "Dummy object for template rendering"
   type = object({
-    name                  = string
-    resource_group_name   = string
-    location              = string
-    tenant_id             = string
-    environment           = string
-    storage_account_name  = string
-    key_vault_id          = string
-    key_vault_name        = string
-    pe_subnet_id          = string
+    name                 = string
+    resource_group_name  = string
+    location             = string
+    tenant_id            = string
+    environment          = string
+    storage_account_name = string
+    key_vault_id         = string
+    key_vault_name       = string
+    pe_subnet_id         = string
   })
   default = {
-    name                  = "dummy"
-    resource_group_name   = "dummy"
-    location              = "dummy"
-    tenant_id             = "dummy"
-    environment           = "dummy"
-    storage_account_name  = "dummy"
-    key_vault_id          = "dummy"
-    key_vault_name        = "dummy"
-    pe_subnet_id          = "dummy"
+    name                 = "dummy"
+    resource_group_name  = "dummy"
+    location             = "dummy"
+    tenant_id            = "dummy"
+    environment          = "dummy"
+    storage_account_name = "dummy"
+    key_vault_id         = "dummy"
+    key_vault_name       = "dummy"
+    pe_subnet_id         = "dummy"
   }
 }
 
