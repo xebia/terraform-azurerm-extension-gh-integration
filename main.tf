@@ -169,6 +169,7 @@ locals {
     project_name = local.actual_spoke_name
     spoke_name   = local.actual_spoke_name
     environment  = local.actual_environment
+    runner_label = var.default_runner_label
   })
 }
 

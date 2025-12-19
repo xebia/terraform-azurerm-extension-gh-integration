@@ -200,3 +200,9 @@ variable "integration_module_source" {
   type        = string
   default     = "git::https://github.com/xebia/xms-integration-modules.git?ref=main"
 }
+
+variable "default_runner_label" {
+  description = "Default label for GitHub Actions self-hosted runners"
+  type        = string
+  default     = "ubuntu24-prod"
+}

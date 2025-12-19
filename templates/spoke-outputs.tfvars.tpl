@@ -26,6 +26,6 @@ spoke_config = {
     "${key}" = "${name}"
 %{ endfor ~}
   }
-  log_analytics_workspace_id  = "${log_analytics_workspace_id}"
-  log_analytics_workspace_name  = "${log_analytics_workspace_name}"
+  log_analytics_workspace_id   = "${log_analytics_workspace_id}"
+  log_analytics_workspace_name = "${log_analytics_workspace_name}"
 }

@@ -1,13 +1,6 @@
 name: Terraform Deploy - ${project_name}
 
-on:
-  workflow_dispatch:
-    inputs:
-      runnerGroup:
-        description: "Specify the runner group to use"
-        required: false
-        default: "XMMSRunnerGroup"
-        type: string
+on: workflow_dispatch
 
 permissions:
   id-token: write
@@ -23,8 +16,7 @@ env:
 jobs:
   terraform:
     name: 'Terraform'
-    runs-on:
-      group: $${{ github.event_name == 'workflow_dispatch' && inputs.runnerGroup || 'XMMSRunnerGroup' }}
+    runs-on: '${runner_label}'
     environment: ${environment}
 
     defaults:
@@ -58,7 +50,6 @@ jobs:
       shell: bash
       env:
         GITHUB_TOKEN: $${{ secrets.GH_INTEGRATION_TOKEN }}
-        SERVER_URL: $${{ github.server_url }}
       run: |
         git config --global url."https://${{ secrets.GH_INTEGRATION_TOKEN }}@${BASE_URL}".insteadOf "https://${BASE_URL}"
         git config --global user.email "terraform@automation.local"
