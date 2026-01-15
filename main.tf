@@ -302,15 +302,17 @@ resource "github_repository_file" "readme" {
 }
 
 # Create GitHub Actions secrets for sensitive authentication data
-resource "github_actions_secret" "gh_integration_token" {
+resource "github_actions_environment_secret" "gh_integration_token" {
   repository      = var.github_repository_name
+  environment     = local.actual_environment
   secret_name     = "GH_INTEGRATION_TOKEN"
   plaintext_value = var.github_token
 }
 
 # Create GitHub Actions variables for Terraform state backend (for debugging visibility)
-resource "github_actions_variable" "tf_state_resource_group" {
+resource "github_actions_environment_variable" "tf_state_resource_group" {
   repository    = var.github_repository_name
+  environment   = local.actual_environment
   variable_name = "TF_STATE_RESOURCE_GROUP"
   value = coalesce(
     var.terraform_state_resource_group,
@@ -319,8 +321,9 @@ resource "github_actions_variable" "tf_state_resource_group" {
   )
 }
 
-resource "github_actions_variable" "tf_state_storage_account" {
+resource "github_actions_environment_variable" "tf_state_storage_account" {
   repository    = var.github_repository_name
+  environment   = local.actual_environment
   variable_name = "TF_STATE_STORAGE_ACCOUNT"
   value = coalesce(
     var.terraform_state_storage_account != "" ? var.terraform_state_storage_account : null,
@@ -330,8 +333,9 @@ resource "github_actions_variable" "tf_state_storage_account" {
   )
 }
 
-resource "github_actions_variable" "tf_state_container" {
+resource "github_actions_environment_variable" "tf_state_container" {
   repository    = var.github_repository_name
+  environment   = local.actual_environment
   variable_name = "TF_STATE_CONTAINER"
   value = coalesce(
     var.terraform_state_container,
@@ -341,7 +345,7 @@ resource "github_actions_variable" "tf_state_container" {
 }
 
 # Create GitHub Actions variables for spoke outputs
-resource "github_actions_variable" "spoke_outputs" {
+resource "github_actions_environment_variable" "spoke_outputs" {
   for_each = {
     spoke_name           = "SPOKE_SPOKE_NAME"
     subscription_id      = "SPOKE_SUBSCRIPTION_ID"
@@ -355,6 +359,7 @@ resource "github_actions_variable" "spoke_outputs" {
   }
 
   repository    = var.github_repository_name
+  environment   = local.actual_environment
   variable_name = each.value
   value = lookup({
     spoke_name           = local.actual_spoke_name
