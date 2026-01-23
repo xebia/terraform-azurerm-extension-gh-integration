@@ -175,6 +175,7 @@ locals {
 
 # Create spoke-outputs.tfvars file content for integration repository
 resource "github_repository_file" "spoke_outputs_tfvars" {
+  count               = var.enable_spoke_outputs_tfvars ? 1 : 0
   repository          = var.github_repository_name
   branch              = "main"
   file                = "spoke-outputs.tfvars"
@@ -187,6 +188,7 @@ resource "github_repository_file" "spoke_outputs_tfvars" {
 
 # Create GitHub Actions workflow for Terraform
 resource "github_repository_file" "workflow_terraform" {
+  count               = var.enable_github_workflow ? 1 : 0
   repository          = var.github_repository_name
   branch              = "main"
   file                = ".github/workflows/terraform.yml"
@@ -197,8 +199,9 @@ resource "github_repository_file" "workflow_terraform" {
   overwrite_on_create = true
 }
 
-# Create main.tf template for integration repository
+# Create main.tf template for integration repository (integration-specific)
 resource "github_repository_file" "main_tf" {
+  count               = var.enable_integration_templates ? 1 : 0
   repository          = var.github_repository_name
   branch              = "main"
   file                = "main.tf"
@@ -214,8 +217,9 @@ resource "github_repository_file" "main_tf" {
   }
 }
 
-# Create variables.tf template for integration repository
+# Create variables.tf template for integration repository (integration-specific)
 resource "github_repository_file" "variables_tf" {
+  count               = var.enable_integration_templates ? 1 : 0
   repository          = var.github_repository_name
   branch              = "main"
   file                = "variables.tf"
@@ -231,8 +235,9 @@ resource "github_repository_file" "variables_tf" {
   }
 }
 
-# Create outputs.tf template for integration repository
+# Create outputs.tf template for integration repository (integration-specific)
 resource "github_repository_file" "outputs_tf" {
+  count               = var.enable_integration_templates ? 1 : 0
   repository          = var.github_repository_name
   branch              = "main"
   file                = "outputs.tf"
@@ -250,6 +255,7 @@ resource "github_repository_file" "outputs_tf" {
 
 # Create versions.tf template for integration repository
 resource "github_repository_file" "versions_tf" {
+  count               = var.enable_terraform_base_files ? 1 : 0
   repository          = var.github_repository_name
   branch              = "main"
   file                = "versions.tf"
@@ -262,6 +268,7 @@ resource "github_repository_file" "versions_tf" {
 
 # Create providers.tf template for integration repository
 resource "github_repository_file" "providers_tf" {
+  count               = var.enable_terraform_base_files ? 1 : 0
   repository          = var.github_repository_name
   branch              = "main"
   file                = "providers.tf"
@@ -274,6 +281,7 @@ resource "github_repository_file" "providers_tf" {
 
 # Create backend.tf template for integration repository
 resource "github_repository_file" "backend_tf" {
+  count               = var.enable_terraform_base_files ? 1 : 0
   repository          = var.github_repository_name
   branch              = "main"
   file                = "backend.tf"
@@ -286,6 +294,7 @@ resource "github_repository_file" "backend_tf" {
 
 # Create README.md for integration repository
 resource "github_repository_file" "readme" {
+  count               = var.enable_readme ? 1 : 0
   repository          = var.github_repository_name
   branch              = "main"
   file                = "README.md"
@@ -303,6 +312,7 @@ resource "github_repository_file" "readme" {
 
 # Create GitHub Actions secrets for sensitive authentication data
 resource "github_actions_environment_secret" "gh_integration_token" {
+  count           = var.enable_github_environment_variables ? 1 : 0
   repository      = var.github_repository_name
   environment     = local.actual_environment
   secret_name     = "GH_INTEGRATION_TOKEN"
@@ -311,6 +321,7 @@ resource "github_actions_environment_secret" "gh_integration_token" {
 
 # Create GitHub Actions variables for Terraform state backend (for debugging visibility)
 resource "github_actions_environment_variable" "tf_state_resource_group" {
+  count         = var.enable_github_environment_variables ? 1 : 0
   repository    = var.github_repository_name
   environment   = local.actual_environment
   variable_name = "TF_STATE_RESOURCE_GROUP"
@@ -322,6 +333,7 @@ resource "github_actions_environment_variable" "tf_state_resource_group" {
 }
 
 resource "github_actions_environment_variable" "tf_state_storage_account" {
+  count         = var.enable_github_environment_variables ? 1 : 0
   repository    = var.github_repository_name
   environment   = local.actual_environment
   variable_name = "TF_STATE_STORAGE_ACCOUNT"
@@ -334,6 +346,7 @@ resource "github_actions_environment_variable" "tf_state_storage_account" {
 }
 
 resource "github_actions_environment_variable" "tf_state_container" {
+  count         = var.enable_github_environment_variables ? 1 : 0
   repository    = var.github_repository_name
   environment   = local.actual_environment
   variable_name = "TF_STATE_CONTAINER"
@@ -346,7 +359,7 @@ resource "github_actions_environment_variable" "tf_state_container" {
 
 # Create GitHub Actions variables for spoke outputs
 resource "github_actions_environment_variable" "spoke_outputs" {
-  for_each = {
+  for_each = var.enable_github_environment_variables ? {
     spoke_name           = "SPOKE_SPOKE_NAME"
     subscription_id      = "SPOKE_SUBSCRIPTION_ID"
     resource_group_name  = "SPOKE_RESOURCE_GROUP_NAME"
@@ -356,7 +369,7 @@ resource "github_actions_environment_variable" "spoke_outputs" {
     storage_account_name = "SPOKE_STORAGE_ACCOUNT_NAME"
     storage_account_id   = "SPOKE_STORAGE_ACCOUNT_ID"
     subnet_id            = "SPOKE_SUBNET_ID"
-  }
+  } : {}
 
   repository    = var.github_repository_name
   environment   = local.actual_environment

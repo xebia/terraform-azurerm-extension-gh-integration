@@ -1,5 +1,42 @@
 # Variables for Integration Module
 
+# Feature Flags - Control which features are enabled
+variable "enable_integration_templates" {
+  description = "Enable generation of integration-specific templates (main.tf, variables.tf, outputs.tf). Set to false for generic spoke deployment without integration module."
+  type        = bool
+  default     = true
+}
+
+variable "enable_spoke_outputs_tfvars" {
+  description = "Enable generation of spoke-outputs.tfvars file with spoke configuration data"
+  type        = bool
+  default     = true
+}
+
+variable "enable_github_workflow" {
+  description = "Enable generation of GitHub Actions Terraform workflow (.github/workflows/terraform.yml)"
+  type        = bool
+  default     = true
+}
+
+variable "enable_terraform_base_files" {
+  description = "Enable generation of base Terraform files (backend.tf, versions.tf, providers.tf)"
+  type        = bool
+  default     = true
+}
+
+variable "enable_github_environment_variables" {
+  description = "Enable creation of GitHub Actions environment variables and secrets (TF_STATE_*, SPOKE_*, GH_INTEGRATION_TOKEN)"
+  type        = bool
+  default     = true
+}
+
+variable "enable_readme" {
+  description = "Enable generation of README.md documentation"
+  type        = bool
+  default     = true
+}
+
 # Repository Configuration
 variable "repository_name" {
   description = "Name of the integration repository"
