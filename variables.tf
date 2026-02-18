@@ -198,7 +198,6 @@ variable "spoke_config" {
 variable "integration_module_source" {
   description = "Source of the integration module"
   type        = string
-  default     = "git::https://xebia-managed-services-eu.ghe.com/xmms/xms-integration-platform-modules-code.git?ref=main"
 }
 
 variable "default_runner_label" {
