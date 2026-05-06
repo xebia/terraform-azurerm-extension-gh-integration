@@ -57,6 +57,11 @@ locals {
     ""
   )
 
+  actual_workload_name = coalesce(
+    try(var.spoke_outputs.workload_short_name, ""),
+    local.actual_spoke_name
+  )
+
   actual_subscription_id = coalesce(
     var.subscription_id,
     var.azure_subscription_id,
@@ -166,10 +171,11 @@ locals {
     timestamp                 = timestamp()
   })
   terraform_workflow_content = templatestring(data.local_file.terraform_workflow_template.content, {
-    project_name = local.actual_spoke_name
-    spoke_name   = local.actual_spoke_name
-    environment  = local.actual_environment
-    runner_label = var.default_runner_label
+    project_name  = local.actual_spoke_name
+    spoke_name    = local.actual_spoke_name
+    workload_name = local.actual_workload_name
+    environment   = local.actual_environment
+    runner_label  = var.default_runner_label
   })
 }
 
@@ -177,7 +183,7 @@ locals {
 resource "github_repository_file" "spoke_outputs_tfvars" {
   repository          = var.github_repository_name
   branch              = "main"
-  file                = "spoke-outputs.tfvars"
+  file                = "spoke-outputs-${local.actual_environment}.tfvars"
   content             = local.spoke_outputs_tfvars_content
   commit_message      = "Update spoke configuration variables from spoke deployment"
   commit_author       = "Terraform Automation"
