@@ -195,6 +195,11 @@ resource "github_repository_file" "workflow_terraform" {
   commit_author       = "Terraform Automation"
   commit_email        = "terraform@automation.local"
   overwrite_on_create = true
+
+  # Always ignore content changes to preserve user customizations
+  lifecycle {
+    ignore_changes = [content, commit_message]
+  }
 }
 
 # Create main.tf template for integration repository
@@ -225,7 +230,7 @@ resource "github_repository_file" "variables_tf" {
   commit_email        = "terraform@automation.local"
   overwrite_on_create = false
 
-  # Ignore content changes to preserve user customizations
+  # Always ignore content changes to preserve user customizations
   lifecycle {
     ignore_changes = [content, commit_message]
   }
@@ -242,7 +247,7 @@ resource "github_repository_file" "outputs_tf" {
   commit_email        = "terraform@automation.local"
   overwrite_on_create = false
 
-  # Ignore content changes to preserve user customizations
+  # Always ignore content changes to preserve user customizations
   lifecycle {
     ignore_changes = [content, commit_message]
   }
@@ -258,6 +263,11 @@ resource "github_repository_file" "versions_tf" {
   commit_author       = "Terraform Automation"
   commit_email        = "terraform@automation.local"
   overwrite_on_create = true
+
+  # Always ignore content changes to preserve user customizations
+  lifecycle {
+    ignore_changes = [content, commit_message]
+  }
 }
 
 # Create providers.tf template for integration repository
@@ -270,6 +280,11 @@ resource "github_repository_file" "providers_tf" {
   commit_author       = "Terraform Automation"
   commit_email        = "terraform@automation.local"
   overwrite_on_create = true
+
+  # Always ignore content changes to preserve user customizations
+  lifecycle {
+    ignore_changes = [content, commit_message]
+  }
 }
 
 # Create backend.tf template for integration repository
