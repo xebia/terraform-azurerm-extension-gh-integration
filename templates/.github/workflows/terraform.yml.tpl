@@ -14,7 +14,7 @@
 #   - Adjust the trigger (schedule, push, pull_request, etc.)
 #
 # The only files that are auto-updated by the spoke deployment are
-# spoke-outputs-<env>.tfvars. All other files in this repo are yours.
+# config/spoke-outputs-<env>.tfvars and config/<env>.azurerm.tfbackend. All other files in this repo are yours.
 # =============================================================================
 
 name: Terraform Deploy - ${project_name}
@@ -77,13 +77,7 @@ jobs:
 
     - name: Terraform Init
       id: init
-      run: |
-        terraform init \
-          -backend-config="resource_group_name=$${{ vars.TF_STATE_RESOURCE_GROUP }}" \
-          -backend-config="storage_account_name=$${{ vars.TF_STATE_STORAGE_ACCOUNT }}" \
-          -backend-config="container_name=$${{ vars.TF_STATE_CONTAINER }}" \
-          -backend-config="key=${workload_name}-dev-integration.tfstate" \
-          -backend-config="use_azuread_auth=true"
+      run: terraform init -backend-config="config/dev.azurerm.tfbackend"
 
     - name: Terraform Validate
       id: validate
@@ -91,7 +85,7 @@ jobs:
 
     - name: Terraform Plan
       id: plan
-      run: terraform plan -var-file="spoke-outputs-dev.tfvars" -no-color -input=false -out=tfplan
+      run: terraform plan -var-file="config/spoke-outputs-dev.tfvars" -no-color -input=false -out=tfplan
 
     - name: Terraform Plan Status
       run: |
@@ -160,13 +154,7 @@ jobs:
 
     - name: Terraform Init
       id: init
-      run: |
-        terraform init \
-          -backend-config="resource_group_name=$${{ vars.TF_STATE_RESOURCE_GROUP }}" \
-          -backend-config="storage_account_name=$${{ vars.TF_STATE_STORAGE_ACCOUNT }}" \
-          -backend-config="container_name=$${{ vars.TF_STATE_CONTAINER }}" \
-          -backend-config="key=${workload_name}-acceptance-integration.tfstate" \
-          -backend-config="use_azuread_auth=true"
+      run: terraform init -backend-config="config/acceptance.azurerm.tfbackend"
 
     - name: Terraform Validate
       id: validate
@@ -174,7 +162,7 @@ jobs:
 
     - name: Terraform Plan
       id: plan
-      run: terraform plan -var-file="spoke-outputs-acceptance.tfvars" -no-color -input=false -out=tfplan
+      run: terraform plan -var-file="config/spoke-outputs-acceptance.tfvars" -no-color -input=false -out=tfplan
 
     - name: Terraform Plan Status
       run: |
@@ -243,13 +231,7 @@ jobs:
 
     - name: Terraform Init
       id: init
-      run: |
-        terraform init \
-          -backend-config="resource_group_name=$${{ vars.TF_STATE_RESOURCE_GROUP }}" \
-          -backend-config="storage_account_name=$${{ vars.TF_STATE_STORAGE_ACCOUNT }}" \
-          -backend-config="container_name=$${{ vars.TF_STATE_CONTAINER }}" \
-          -backend-config="key=${workload_name}-prod-integration.tfstate" \
-          -backend-config="use_azuread_auth=true"
+      run: terraform init -backend-config="config/prod.azurerm.tfbackend"
 
     - name: Terraform Validate
       id: validate
@@ -257,7 +239,7 @@ jobs:
 
     - name: Terraform Plan
       id: plan
-      run: terraform plan -var-file="spoke-outputs-prod.tfvars" -no-color -input=false -out=tfplan
+      run: terraform plan -var-file="config/spoke-outputs-prod.tfvars" -no-color -input=false -out=tfplan
 
     - name: Terraform Plan Status
       run: |
