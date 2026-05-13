@@ -42,6 +42,10 @@ data "local_file" "backend_tf_template" {
   filename = "${path.module}/templates/backend.tf.tpl"
 }
 
+data "local_file" "backend_config_template" {
+  filename = "${path.module}/templates/backend-config.tfbackend.tpl"
+}
+
 # Get reference to existing GitHub repository (created by gh-repo extension)
 # This repository should already exist when this module is called
 data "github_repository" "integration_repo" {
@@ -55,6 +59,30 @@ locals {
     try(var.spoke_outputs.spoke_name, ""),
     var.project_name,
     ""
+  )
+
+  actual_workload_name = coalesce(
+    try(var.spoke_outputs.workload_short_name, ""),
+    local.actual_spoke_name
+  )
+
+  actual_tf_state_resource_group = coalesce(
+    var.terraform_state_resource_group,
+    try(var.spoke_outputs.terraform_state_resource_group, ""),
+    local.actual_spoke_resource_group_name
+  )
+
+  actual_tf_state_storage_account = coalesce(
+    var.terraform_state_storage_account != "" ? var.terraform_state_storage_account : null,
+    try(var.spoke_outputs.terraform_state_storage_account, ""),
+    try(var.spoke_outputs.storage_account_name, ""),
+    "stterraformstate${replace(local.actual_spoke_name, "-", "")}"
+  )
+
+  actual_tf_state_container = coalesce(
+    var.terraform_state_container,
+    try(var.spoke_outputs.terraform_state_container, ""),
+    "tfstate"
   )
 
   actual_subscription_id = coalesce(
@@ -156,6 +184,12 @@ locals {
     spoke_name      = local.actual_spoke_name
     subscription_id = local.actual_subscription_id
   })
+  backend_config_content = templatestring(data.local_file.backend_config_template.content, {
+    resource_group_name  = local.actual_tf_state_resource_group
+    storage_account_name = local.actual_tf_state_storage_account
+    container_name       = local.actual_tf_state_container
+    key                  = "${local.actual_workload_name}-${local.actual_environment}-integration.tfstate"
+  })
   readme_content = templatestring(data.local_file.readme_template.content, {
     project_name              = local.actual_spoke_name
     spoke_name                = local.actual_spoke_name
@@ -166,10 +200,11 @@ locals {
     timestamp                 = timestamp()
   })
   terraform_workflow_content = templatestring(data.local_file.terraform_workflow_template.content, {
-    project_name = local.actual_spoke_name
-    spoke_name   = local.actual_spoke_name
-    environment  = local.actual_environment
-    runner_label = var.default_runner_label
+    project_name  = local.actual_spoke_name
+    spoke_name    = local.actual_spoke_name
+    workload_name = local.actual_workload_name
+    environment   = local.actual_environment
+    runner_label  = var.default_runner_label
   })
 }
 
@@ -177,9 +212,21 @@ locals {
 resource "github_repository_file" "spoke_outputs_tfvars" {
   repository          = var.github_repository_name
   branch              = "main"
-  file                = "spoke-outputs.tfvars"
+  file                = "config/spoke-outputs-${local.actual_environment}.tfvars"
   content             = local.spoke_outputs_tfvars_content
   commit_message      = "Update spoke configuration variables from spoke deployment"
+  commit_author       = "Terraform Automation"
+  commit_email        = "terraform@automation.local"
+  overwrite_on_create = true
+}
+
+# Create backend config file for the environment
+resource "github_repository_file" "backend_config" {
+  repository          = var.github_repository_name
+  branch              = "main"
+  file                = "config/${local.actual_environment}.azurerm.tfbackend"
+  content             = local.backend_config_content
+  commit_message      = "Update backend configuration from spoke deployment"
   commit_author       = "Terraform Automation"
   commit_email        = "terraform@automation.local"
   overwrite_on_create = true
@@ -322,41 +369,6 @@ resource "github_actions_environment_secret" "gh_integration_token" {
   environment     = local.actual_environment
   secret_name     = "GH_INTEGRATION_TOKEN"
   plaintext_value = var.github_token
-}
-
-# Create GitHub Actions variables for Terraform state backend (for debugging visibility)
-resource "github_actions_environment_variable" "tf_state_resource_group" {
-  repository    = var.github_repository_name
-  environment   = local.actual_environment
-  variable_name = "TF_STATE_RESOURCE_GROUP"
-  value = coalesce(
-    var.terraform_state_resource_group,
-    try(var.spoke_outputs.terraform_state_resource_group, ""),
-    local.actual_spoke_resource_group_name
-  )
-}
-
-resource "github_actions_environment_variable" "tf_state_storage_account" {
-  repository    = var.github_repository_name
-  environment   = local.actual_environment
-  variable_name = "TF_STATE_STORAGE_ACCOUNT"
-  value = coalesce(
-    var.terraform_state_storage_account != "" ? var.terraform_state_storage_account : null,
-    try(var.spoke_outputs.terraform_state_storage_account, ""),
-    try(var.spoke_outputs.storage_account_name, ""),
-    "stterraformstate${replace(local.actual_spoke_name, "-", "")}"
-  )
-}
-
-resource "github_actions_environment_variable" "tf_state_container" {
-  repository    = var.github_repository_name
-  environment   = local.actual_environment
-  variable_name = "TF_STATE_CONTAINER"
-  value = coalesce(
-    var.terraform_state_container,
-    try(var.spoke_outputs.terraform_state_container, ""),
-    "tfstate"
-  )
 }
 
 # Create GitHub Actions variables for spoke outputs
