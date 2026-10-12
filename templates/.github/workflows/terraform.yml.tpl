@@ -63,12 +63,22 @@ jobs:
         tenant-id: $${{ secrets.AZURE_TENANT_ID }}
         subscription-id: $${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+    - name: Create GitHub App token for private module access
+      id: module-token
+      uses: actions/create-github-app-token@v3
+      with:
+        app-id: $${{ vars.INTEGRATION_MODULE_GH_APP_ID }}
+        private-key: $${{ secrets.INTEGRATION_MODULE_APP_PRIVATE_KEY }}
+        owner: ${module_owner}
+        repositories: ${module_repository}
+        permission-contents: read
+
     - name: Configure Git for private module access
       shell: bash
       env:
-        GITHUB_TOKEN: $${{ secrets.GH_INTEGRATION_TOKEN }}
+        GITHUB_TOKEN: $${{ steps.module-token.outputs.token }}
       run: |
-        git config --global url."$${GITHUB_SERVER_URL/:\/\//://$GITHUB_TOKEN@}/".insteadOf "$GITHUB_SERVER_URL/"
+        git config --global url."https://x-access-token:$GITHUB_TOKEN@$${GITHUB_SERVER_URL#https://}/".insteadOf "$GITHUB_SERVER_URL/"
 
     - name: Terraform Format Check
       id: fmt
@@ -140,12 +150,22 @@ jobs:
         tenant-id: $${{ secrets.AZURE_TENANT_ID }}
         subscription-id: $${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+    - name: Create GitHub App token for private module access
+      id: module-token
+      uses: actions/create-github-app-token@v3
+      with:
+        app-id: $${{ vars.INTEGRATION_MODULE_GH_APP_ID }}
+        private-key: $${{ secrets.INTEGRATION_MODULE_APP_PRIVATE_KEY }}
+        owner: ${module_owner}
+        repositories: ${module_repository}
+        permission-contents: read
+
     - name: Configure Git for private module access
       shell: bash
       env:
-        GITHUB_TOKEN: $${{ secrets.GH_INTEGRATION_TOKEN }}
+        GITHUB_TOKEN: $${{ steps.module-token.outputs.token }}
       run: |
-        git config --global url."$${GITHUB_SERVER_URL/:\/\//://$GITHUB_TOKEN@}/".insteadOf "$GITHUB_SERVER_URL/"
+        git config --global url."https://x-access-token:$GITHUB_TOKEN@$${GITHUB_SERVER_URL#https://}/".insteadOf "$GITHUB_SERVER_URL/"
 
     - name: Terraform Format Check
       id: fmt
@@ -217,12 +237,22 @@ jobs:
         tenant-id: $${{ secrets.AZURE_TENANT_ID }}
         subscription-id: $${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+    - name: Create GitHub App token for private module access
+      id: module-token
+      uses: actions/create-github-app-token@v3
+      with:
+        app-id: $${{ vars.INTEGRATION_MODULE_GH_APP_ID }}
+        private-key: $${{ secrets.INTEGRATION_MODULE_APP_PRIVATE_KEY }}
+        owner: ${module_owner}
+        repositories: ${module_repository}
+        permission-contents: read
+
     - name: Configure Git for private module access
       shell: bash
       env:
-        GITHUB_TOKEN: $${{ secrets.GH_INTEGRATION_TOKEN }}
+        GITHUB_TOKEN: $${{ steps.module-token.outputs.token }}
       run: |
-        git config --global url."$${GITHUB_SERVER_URL/:\/\//://$GITHUB_TOKEN@}/".insteadOf "$GITHUB_SERVER_URL/"
+        git config --global url."https://x-access-token:$GITHUB_TOKEN@$${GITHUB_SERVER_URL#https://}/".insteadOf "$GITHUB_SERVER_URL/"
 
     - name: Terraform Format Check
       id: fmt

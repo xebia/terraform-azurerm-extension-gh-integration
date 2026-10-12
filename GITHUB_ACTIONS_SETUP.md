@@ -1,97 +1,57 @@
 # GitHub Actions Setup for Integration Repositories
 
-## Required GitHub Variables and Secrets
+The generated workflow runs Terraform for `dev`, `acceptance`, and `prod`. It uses a GitHub App installation token to download the private Terraform module selected by `integration_module_source`, and Azure OIDC to authenticate to Azure.
 
-When the extension creates an integration repository with GitHub Actions workflow, you need to configure the following in the repository settings:
+## GitHub App Access To The Private Module
 
-### GitHub Variables (for visibility in logs)
+Create a dedicated GitHub App for the organization that owns the private module repository. The App needs only **Contents: Read-only** access to the module repository; it does not need write access to the integration repositories or other repository permissions.
 
-Navigate to **Settings → Secrets and variables → Actions → Variables tab** and add:
+1. In the organization, open **Settings → Developer settings → GitHub Apps → New GitHub App**.
+2. Enter an App name and configure the callback/webhook settings according to your organization policy. This App is used for workflow authentication, so a webhook is not needed by this workflow.
+3. Under **Repository permissions**, set **Contents** to **Read-only**. No other repository permission is required to clone the module.
+4. Create the App, then note its numeric **App ID** from the App settings page.
+5. Generate a private key from the App's settings page and store it securely. GitHub only provides the private key file when generated; it cannot be retrieved later.
+6. Install the App on the organization that owns `xms-integration-platform-modules-code`. For least privilege, select **Only select repositories** and choose `xms-integration-platform-modules-code`.
+7. Confirm the App installation is approved and has access to that repository.
 
-| Variable Name | Description | Example Value |
-|---------------|-------------|---------------|
-| `TF_STATE_RESOURCE_GROUP` | Resource group containing Terraform state storage | `rg-terraform-state-prod` |
-| `TF_STATE_STORAGE_ACCOUNT` | Storage account name for Terraform state | `stterraformstateprod` |
-| `TF_STATE_CONTAINER` | Blob container for state files | `tfstate` |
+The workflow creates a short-lived installation token in each deployment job and requests access only to the configured module repository with `Contents: read`. The token is used by Git to clone the module during `terraform init`; it is not the Azure credential and does not need to be stored as a long-lived token.
 
-### GitHub Secrets (for sensitive data)
+## Organization Actions Variable And Secret
 
-Navigate to **Settings → Secrets and variables → Actions → Secrets tab** and add:
+Create these at the **organization level**, not separately in each integration repository:
 
-| Secret Name | Description | How to Get |
-|-------------|-------------|------------|
-| `ARM_CLIENT_ID` | Azure AD application client ID | From your Azure AD app registration |
-| `ARM_CLIENT_SECRET` | Azure AD application client secret | From your Azure AD app registration |
-| `ARM_SUBSCRIPTION_ID` | Azure subscription ID | From Azure portal or `az account show` |
-| `ARM_TENANT_ID` | Azure AD tenant ID | From Azure portal or `az account show` |
+| Type | Name | Value |
+|------|------|-------|
+| Organization variable | `INTEGRATION_MODULE_GH_APP_ID` | The numeric GitHub App ID |
+| Organization secret | `INTEGRATION_MODULE_APP_PRIVATE_KEY` | The complete contents of the generated private key PEM file |
 
-## Why Variables vs Secrets?
+In the organization, open **Settings → Secrets and variables → Actions**. Add the variable under **Variables** and the private key under **Secrets**. For both, set repository access to **All repositories** so the generated workflow can access them from every integration repository in the organization. If organization policy restricts access to selected repositories, add each integration repository to the access list. When a new spoke is created with the GitHub repository and integration extensions enabled, add its integration repository to both access lists before running its deployment workflow. Otherwise, create `INTEGRATION_MODULE_GH_APP_ID` as a repository Actions variable and `INTEGRATION_MODULE_APP_PRIVATE_KEY` as a repository Actions secret in that repository before the first workflow run.
 
-### Variables (Visible in Logs) ✅
-- **Storage account name**: Not sensitive, helps with debugging
-- **Resource group name**: Not sensitive, helps with debugging  
-- **Container name**: Not sensitive, helps with debugging
+Treat the private key as a credential. Do not commit it to a repository or place it in an Actions variable. If it is exposed, revoke the key in the GitHub App settings and generate a replacement.
 
-### Secrets (Hidden in Logs) 🔒
-- **Client ID**: Sensitive authentication data
-- **Client secret**: Highly sensitive authentication data
-- **Subscription ID**: Sensitive subscription identifier
-- **Tenant ID**: Sensitive tenant identifier
+## Azure OIDC Configuration
 
-## Troubleshooting DNS Issues
+The workflow uses Azure federated identity credentials; it does not use an Azure client secret. Configure these Actions secrets for the workflow's `dev`, `acceptance`, and `prod` environments, or provide them as organization/repository secrets available to those jobs:
 
-If you encounter DNS lookup errors for storage accounts (like `spoketerraformstateprod.blob.core.windows.net` not found), the visible variable values in logs help identify:
+| Secret name | Value |
+|-------------|-------|
+| `AZURE_CLIENT_ID` | Client ID of the Azure application/service principal configured for workload identity federation |
+| `AZURE_SUBSCRIPTION_ID` | Azure subscription ID |
+| `AZURE_TENANT_ID` | Microsoft Entra tenant ID |
 
-1. **Correct storage account name**: Check if the name matches the actual Azure resource
-2. **Naming conflicts**: Verify the storage account name is globally unique
-3. **Resource group**: Ensure the state storage exists in the specified resource group
-4. **Network access**: Verify the storage account allows access from GitHub Actions runners
+Configure federated credentials in Microsoft Entra ID for the GitHub repository and the relevant GitHub environments. Grant the identity the required Azure resource permissions and Azure Blob data-plane access to the Terraform state container.
 
-## Example Debug Output
+## Terraform State Configuration
 
-With variables, you'll see clear debug information in workflow logs:
+The extension writes the backend settings into `config/<environment>.azurerm.tfbackend` when it populates the integration repository. The workflow passes that file to `terraform init`; it does not read `TF_STATE_RESOURCE_GROUP`, `TF_STATE_STORAGE_ACCOUNT`, or `TF_STATE_CONTAINER` Actions variables. Ensure the generated backend points to an existing storage account and container, and that the Azure identity can access the state blob.
 
-```
-Backend configuration:
-Resource Group: rg-terraform-state-prod
-Storage Account: spoketerraformstateprod
-Container: tfstate
-Key: spoke-dev-integration.tfstate
-All backend configuration variables are properly set
-```
+## Running The Workflow
 
-This makes it much easier to identify configuration issues compared to redacted secret values.
+The generated workflow is triggered manually with **Actions → Terraform Deploy → Run workflow**. It runs the stages in order: `dev`, then `acceptance`, then `prod`. Configure GitHub environment protection rules, such as required reviewers, if approvals are required before higher environments deploy.
 
-## Manual Setup Steps
+## Troubleshooting Private Module Access
 
-1. **Create Variables**: Add the three Terraform state variables with your actual values
-2. **Create Secrets**: Add the four Azure authentication secrets
-3. **Test Workflow**: Push a change to trigger the workflow and verify authentication works
-4. **Check Logs**: Review the debug output to confirm all variables are correctly set
-
-## Security Considerations
-
-- **Never put sensitive data in variables** - they are visible to anyone with repository read access
-- **Use secrets for all authentication credentials** - they are encrypted and hidden in logs
-- **Regularly rotate client secrets** - especially if repository access changes
-- **Limit secret access** - only give repository access to users who need it
-
-## Common Issues
-
-### DNS Lookup Failures
-If you see errors like "no such host spoketerraformstateprod.blob.core.windows.net":
-1. Verify the storage account name in `TF_STATE_STORAGE_ACCOUNT` variable
-2. Check if the storage account exists in Azure
-3. Ensure the storage account name follows Azure naming rules (lowercase, no special characters)
-
-### Authentication Failures
-If you see "authentication failed" errors:
-1. Verify all four ARM_* secrets are set correctly
-2. Check that the service principal has Contributor access to the subscription
-3. Ensure the client secret hasn't expired
-
-### Missing Variables
-If the workflow shows "ERROR: TF_STATE_* variable is not set!":
-1. Check that all three variables are created in the repository settings
-2. Verify variable names match exactly (case-sensitive)
-3. Ensure variables have non-empty values
+- **The token action cannot create a token:** Check that the App is installed on the module repository's owning organization and that the App ID and private key are correct and available to the integration repository.
+- **The token is created but `terraform init` cannot clone the module:** Confirm the App installation includes `xms-integration-platform-modules-code` and has **Contents: Read-only** permission. Also check that `integration_module_source` uses the correct owner, repository, and ref.
+- **An Actions value is empty:** Confirm the organization variable/secret's repository access policy includes the integration repository. Organization secrets and variables must be available to all three environment jobs.
+- **Azure authentication or state access fails:** Check the Azure OIDC federated credentials, the three `AZURE_*` secrets, Azure role assignments, and Storage Blob data-plane permissions. These are separate from the GitHub App permissions.

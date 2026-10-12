@@ -53,6 +53,8 @@ data "github_repository" "integration_repo" {
 }
 
 locals {
+  integration_module_source_parts = regex("^.*https://[^/]+/(?P<owner>[^/]+)/(?P<repository>[^/?]+)", var.integration_module_source)
+
   # Backwards compatibility: extract values from either new variables or legacy spoke_outputs
   actual_spoke_name = coalesce(
     var.spoke_name,
@@ -200,11 +202,13 @@ locals {
     timestamp                 = timestamp()
   })
   terraform_workflow_content = templatestring(data.local_file.terraform_workflow_template.content, {
-    project_name  = local.actual_spoke_name
-    spoke_name    = local.actual_spoke_name
-    workload_name = local.actual_workload_name
-    environment   = local.actual_environment
-    runner_label  = var.default_runner_label
+    project_name       = local.actual_spoke_name
+    spoke_name         = local.actual_spoke_name
+    workload_name      = local.actual_workload_name
+    environment        = local.actual_environment
+    runner_label       = var.default_runner_label
+    module_owner       = local.integration_module_source_parts.owner
+    module_repository  = trimsuffix(local.integration_module_source_parts.repository, ".git")
   })
 }
 
