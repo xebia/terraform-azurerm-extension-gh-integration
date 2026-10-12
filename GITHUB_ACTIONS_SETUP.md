@@ -4,20 +4,28 @@ The generated workflow runs Terraform for `dev`, `acceptance`, and `prod`. It us
 
 ## GitHub App Access To The Private Module
 
-The generated workflow uses the same Cloud Platform GitHub App as the platform deployment workflows. Do not create a separate App for integration repositories. The App must be installed with access to the organization that owns `xms-integration-platform-modules-code`, and its installation must have **Contents: Read-only** access to that repository so Terraform can download the private module. Confirm the App installation is approved and includes the module repository.
+Create a dedicated GitHub App for the organization that owns the private module repository. The App needs only **Contents: Read-only** access to the module repository; it does not need write access to the integration repositories or other repository permissions.
+
+1. In the organization, open **Settings → Developer settings → GitHub Apps → New GitHub App**.
+2. Enter an App name and configure the callback/webhook settings according to your organization policy. This App is used for workflow authentication, so a webhook is not needed by this workflow.
+3. Under **Repository permissions**, set **Contents** to **Read-only**. No other repository permission is required to clone the module.
+4. Create the App, then note its numeric **App ID** from the App settings page.
+5. Generate a private key from the App's settings page and store it securely. GitHub only provides the private key file when generated; it cannot be retrieved later.
+6. Install the App on the organization that owns `xms-integration-platform-modules-code`. For least privilege, select **Only select repositories** and choose `xms-integration-platform-modules-code`.
+7. Confirm the App installation is approved and has access to that repository.
 
 The workflow creates a short-lived installation token in each deployment job and requests access only to the configured module repository with `Contents: read`. The token is used by Git to clone the module during `terraform init`; it is not the Azure credential and does not need to be stored as a long-lived token.
 
 ## Organization Actions Variable And Secret
 
-The workflow reads the shared Cloud Platform App credentials from organization-level Actions variables and secrets:
+Create these at the **organization level**, not separately in each integration repository:
 
 | Type | Name | Value |
 |------|------|-------|
-| Organization variable | `cloud_platform_gh_app_id` | The numeric Cloud Platform GitHub App ID |
-| Organization secret | `cloud_platform_gh_app_private_key` | The complete contents of the Cloud Platform GitHub App private key PEM file |
+| Organization variable | `INTEGRATION_MODULE_GH_APP_ID` | The numeric GitHub App ID |
+| Organization secret | `INTEGRATION_MODULE_APP_PRIVATE_KEY` | The complete contents of the generated private key PEM file |
 
-In the organization, open **Settings → Secrets and variables → Actions**. Make the variable and secret available to each integration repository that runs this workflow. If organization policy restricts access to selected repositories, add each integration repository to both access lists. When a new spoke is created with the GitHub repository and integration extensions enabled, include its integration repository before running its deployment workflow. These names match the credentials used by the platform deployment workflows.
+In the organization, open **Settings → Secrets and variables → Actions**. Add the variable under **Variables** and the private key under **Secrets**. For both, set repository access to **All repositories** so the generated workflow can access them from every integration repository in the organization. If organization policy restricts access to selected repositories, add each integration repository to the access list. When a new spoke is created with the GitHub repository and integration extensions enabled, add its integration repository to both access lists before running its deployment workflow. Otherwise, create `INTEGRATION_MODULE_GH_APP_ID` as a repository Actions variable and `INTEGRATION_MODULE_APP_PRIVATE_KEY` as a repository Actions secret in that repository before the first workflow run.
 
 Treat the private key as a credential. Do not commit it to a repository or place it in an Actions variable. If it is exposed, revoke the key in the GitHub App settings and generate a replacement.
 

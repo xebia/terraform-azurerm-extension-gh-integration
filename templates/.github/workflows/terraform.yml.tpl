@@ -67,8 +67,8 @@ jobs:
       id: module-token
       uses: actions/create-github-app-token@v3
       with:
-        app-id: $${{ vars.cloud_platform_gh_app_id }}
-        private-key: $${{ secrets.cloud_platform_gh_app_private_key }}
+        app-id: $${{ vars.INTEGRATION_MODULE_GH_APP_ID }}
+        private-key: $${{ secrets.INTEGRATION_MODULE_APP_PRIVATE_KEY }}
         owner: ${module_owner}
         repositories: ${module_repository}
         permission-contents: read
@@ -154,8 +154,8 @@ jobs:
       id: module-token
       uses: actions/create-github-app-token@v3
       with:
-        app-id: $${{ vars.cloud_platform_gh_app_id }}
-        private-key: $${{ secrets.cloud_platform_gh_app_private_key }}
+        app-id: $${{ vars.INTEGRATION_MODULE_GH_APP_ID }}
+        private-key: $${{ secrets.INTEGRATION_MODULE_APP_PRIVATE_KEY }}
         owner: ${module_owner}
         repositories: ${module_repository}
         permission-contents: read
@@ -241,8 +241,8 @@ jobs:
       id: module-token
       uses: actions/create-github-app-token@v3
       with:
-        app-id: $${{ vars.cloud_platform_gh_app_id }}
-        private-key: $${{ secrets.cloud_platform_gh_app_private_key }}
+        app-id: $${{ vars.INTEGRATION_MODULE_GH_APP_ID }}
+        private-key: $${{ secrets.INTEGRATION_MODULE_APP_PRIVATE_KEY }}
         owner: ${module_owner}
         repositories: ${module_repository}
         permission-contents: read
