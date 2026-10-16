@@ -48,6 +48,11 @@ variable "environment" {
   description = "Environment name (dev, test, prod)"
   type        = string
   default     = ""
+
+  validation {
+    condition     = var.environment == "" || can(regex("^[A-Za-z0-9_-]+$", var.environment))
+    error_message = "environment must be a single path-safe name containing letters, digits, underscores, or hyphens."
+  }
 }
 
 # Key Vault Configuration
@@ -84,7 +89,27 @@ variable "github_organization" {
 }
 
 variable "github_token" {
-  description = "GitHub token (legacy)"
+  description = "Sensitive publisher token. If empty, uses GH_TOKEN or GITHUB_TOKEN from the Terraform process. Provider credentials are not inherited."
+  type        = string
+  default     = ""
+  sensitive   = true
+  nullable    = false
+}
+
+variable "github_api_url" {
+  description = "GitHub REST API URL for proposals; use https://<host>/api/v3 for GitHub Enterprise Server. Must match the GitHub provider host."
+  type        = string
+  default     = "https://api.github.com"
+  nullable    = false
+
+  validation {
+    condition     = can(regex("^https://[^/?#@]+(/[^?#]*)?$", var.github_api_url))
+    error_message = "github_api_url must be an HTTPS API URL without credentials, query, or fragment."
+  }
+}
+
+variable "proposal_revision" {
+  description = "Explicit retry identifier for a rejected proposal. Change this value to propose identical content again after a rejection."
   type        = string
   default     = ""
 }

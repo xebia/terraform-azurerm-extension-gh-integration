@@ -1,6 +1,6 @@
 
 # Integration Module
-# This module creates GitHub repositories with integration workflows and passes spoke data
+# This module proposes integration repository content and passes spoke data
 
 # Get current Azure client configuration
 data "azurerm_client_config" "current" {}
@@ -142,13 +142,7 @@ locals {
     "${local.actual_spoke_name}-vnet"
   )
 
-  # Repository name: use repository_name if provided, otherwise derive from spoke_name
-  actual_repository_name = coalesce(
-    var.repository_name,
-    "${local.actual_spoke_name}-repo",
-    var.project_name,
-    "integration-repo"
-  )
+  actual_repository_name = var.github_repository_name
 
   # Generate spoke-outputs.tfvars content using the new spoke_config object format
   spoke_outputs_tfvars_content = templatestring(data.local_file.spoke_outputs_tfvars_template.content, {
@@ -199,172 +193,16 @@ locals {
     spoke_resource_group_name = local.actual_spoke_resource_group_name
     spoke_location            = local.actual_spoke_location
     environment               = local.actual_environment
-    timestamp                 = timestamp()
   })
   terraform_workflow_content = templatestring(data.local_file.terraform_workflow_template.content, {
-    project_name       = local.actual_spoke_name
-    spoke_name         = local.actual_spoke_name
-    workload_name      = local.actual_workload_name
-    environment        = local.actual_environment
-    runner_label       = var.default_runner_label
-    module_owner       = local.integration_module_source_parts.owner
-    module_repository  = trimsuffix(local.integration_module_source_parts.repository, ".git")
+    project_name      = local.actual_spoke_name
+    spoke_name        = local.actual_spoke_name
+    workload_name     = local.actual_workload_name
+    environment       = local.actual_environment
+    runner_label      = var.default_runner_label
+    module_owner      = local.integration_module_source_parts.owner
+    module_repository = trimsuffix(local.integration_module_source_parts.repository, ".git")
   })
-}
-
-# Create spoke-outputs.tfvars file content for integration repository
-resource "github_repository_file" "spoke_outputs_tfvars" {
-  repository          = var.github_repository_name
-  branch              = "main"
-  file                = "config/spoke-outputs-${local.actual_environment}.tfvars"
-  content             = local.spoke_outputs_tfvars_content
-  commit_message      = "Update spoke configuration variables from spoke deployment"
-  commit_author       = "Terraform Automation"
-  commit_email        = "terraform@automation.local"
-  overwrite_on_create = true
-}
-
-# Create backend config file for the environment
-resource "github_repository_file" "backend_config" {
-  repository          = var.github_repository_name
-  branch              = "main"
-  file                = "config/${local.actual_environment}.azurerm.tfbackend"
-  content             = local.backend_config_content
-  commit_message      = "Update backend configuration from spoke deployment"
-  commit_author       = "Terraform Automation"
-  commit_email        = "terraform@automation.local"
-  overwrite_on_create = true
-}
-
-# Create GitHub Actions workflow for Terraform
-resource "github_repository_file" "workflow_terraform" {
-  repository          = var.github_repository_name
-  branch              = "main"
-  file                = ".github/workflows/terraform.yml"
-  content             = local.terraform_workflow_content
-  commit_message      = "Update Terraform workflow"
-  commit_author       = "Terraform Automation"
-  commit_email        = "terraform@automation.local"
-  overwrite_on_create = true
-
-  # Always ignore content changes to preserve user customizations
-  lifecycle {
-    ignore_changes = [content, commit_message]
-  }
-}
-
-# Create main.tf template for integration repository
-resource "github_repository_file" "main_tf" {
-  repository          = var.github_repository_name
-  branch              = "main"
-  file                = "main.tf"
-  content             = local.main_tf_content
-  commit_message      = "Add main Terraform configuration"
-  commit_author       = "Terraform Automation"
-  commit_email        = "terraform@automation.local"
-  overwrite_on_create = false
-
-  # Always ignore content changes to preserve user customizations
-  lifecycle {
-    ignore_changes = [content, commit_message]
-  }
-}
-
-# Create variables.tf template for integration repository
-resource "github_repository_file" "variables_tf" {
-  repository          = var.github_repository_name
-  branch              = "main"
-  file                = "variables.tf"
-  content             = local.variables_tf_content
-  commit_message      = "Add variables configuration"
-  commit_author       = "Terraform Automation"
-  commit_email        = "terraform@automation.local"
-  overwrite_on_create = false
-
-  # Always ignore content changes to preserve user customizations
-  lifecycle {
-    ignore_changes = [content, commit_message]
-  }
-}
-
-# Create outputs.tf template for integration repository
-resource "github_repository_file" "outputs_tf" {
-  repository          = var.github_repository_name
-  branch              = "main"
-  file                = "outputs.tf"
-  content             = local.outputs_tf_content
-  commit_message      = "Add outputs configuration"
-  commit_author       = "Terraform Automation"
-  commit_email        = "terraform@automation.local"
-  overwrite_on_create = false
-
-  # Always ignore content changes to preserve user customizations
-  lifecycle {
-    ignore_changes = [content, commit_message]
-  }
-}
-
-# Create versions.tf template for integration repository
-resource "github_repository_file" "versions_tf" {
-  repository          = var.github_repository_name
-  branch              = "main"
-  file                = "versions.tf"
-  content             = local.versions_tf_content
-  commit_message      = "Add provider versions configuration"
-  commit_author       = "Terraform Automation"
-  commit_email        = "terraform@automation.local"
-  overwrite_on_create = true
-
-  # Always ignore content changes to preserve user customizations
-  lifecycle {
-    ignore_changes = [content, commit_message]
-  }
-}
-
-# Create providers.tf template for integration repository
-resource "github_repository_file" "providers_tf" {
-  repository          = var.github_repository_name
-  branch              = "main"
-  file                = "providers.tf"
-  content             = local.providers_tf_content
-  commit_message      = "Add provider configuration"
-  commit_author       = "Terraform Automation"
-  commit_email        = "terraform@automation.local"
-  overwrite_on_create = true
-
-  # Always ignore content changes to preserve user customizations
-  lifecycle {
-    ignore_changes = [content, commit_message]
-  }
-}
-
-# Create backend.tf template for integration repository
-resource "github_repository_file" "backend_tf" {
-  repository          = var.github_repository_name
-  branch              = "main"
-  file                = "backend.tf"
-  content             = local.backend_tf_content
-  commit_message      = "Add backend configuration with Azure AD auth"
-  commit_author       = "Terraform Automation"
-  commit_email        = "terraform@automation.local"
-  overwrite_on_create = true
-}
-
-# Create README.md for integration repository
-resource "github_repository_file" "readme" {
-  repository          = var.github_repository_name
-  branch              = "main"
-  file                = "README.md"
-  content             = local.readme_content
-  commit_message      = "Add README documentation"
-  commit_author       = "Terraform Automation"
-  commit_email        = "terraform@automation.local"
-  overwrite_on_create = true
-
-  # Ignore content changes to preserve user customizations
-  lifecycle {
-    ignore_changes = [content, commit_message]
-  }
 }
 
 # Create GitHub Actions secrets for sensitive authentication data

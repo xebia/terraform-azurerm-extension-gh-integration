@@ -1,83 +1,80 @@
 # Terraform Azure GitHub Integration Extension
 
-This extension automatically creates and configures GitHub repositories for integration deployments. It supports two operational modes: full repository setup for new integrations and spoke-outputs auto-update for maintaining synchronization with spoke changes.
+This extension proposes integration Terraform configuration through pull requests in an existing workload repository. It never writes files to the repository's default branch and never merges a pull request. Repository creation belongs to the separate `github` extension.
 
 ## Quick Setup
 
-1. **Use this extension** to create an integration repository
-2. **Configure GitHub Actions** following the [GitHub Actions Setup Guide](GITHUB_ACTIONS_SETUP.md)
-3. **Deploy your integration** using the generated Terraform configuration
+1. Create or select an initialized workload repository using the `github` extension.
+2. Configure publisher credentials and run the spoke deployment.
+3. Review and merge the integration configuration pull request.
+4. Configure GitHub Actions following the [GitHub Actions Setup Guide](GITHUB_ACTIONS_SETUP.md).
 
 ## Purpose
 
 This extension is used by the spoke deployment system to:
 1. **Configure existing GitHub repositories** for integration workloads (repositories are created by a separate extension)
-2. **Populate repositories** with Terraform configurations and spoke data
-3. **Set up automated deployment workflows** via GitHub Actions
-4. **Maintain spoke-integration synchronization** by automatically updating `spoke-outputs.tfvars` with the latest spoke configuration on subsequent deployments
+2. **Propose repository content** with Terraform configurations and spoke data
+3. **Propose deployment workflows** via GitHub Actions when missing
+4. **Propose spoke configuration updates** for the workload team to review
 5. **Pass spoke outputs** as variables for integration resources
 
 ## Usage
 
-This extension supports two operational modes:
+Run Terraform with PowerShell 7.2 or newer available as `pwsh`. The publisher reads `github_token`, then `GH_TOKEN`, then `GITHUB_TOKEN`. A GitHub App installation token is suitable, but the publisher cannot inherit an App session created inside the Terraform GitHub provider. Issue a token in the deployment pipeline and supply it through a protected environment variable. Do not put tokens in committed variable files.
 
-### 1. Full Integration Repository Setup (Default)
-
-Creates a complete integration repository with all necessary files and configurations:
+The token needs repository contents and pull requests write permissions, plus permission to update workflows when a missing workflow is proposed (`Workflows: write` for GitHub Apps or the corresponding PAT scope). The App must be installed on the workload repository. Use a token scoped to that repository; no branch-protection bypass is required.
 
 ```hcl
 module "github_integration" {
   source = "../terraform-azurerm-extension-gh-integration"
 
-  repository_name        = var.repository_name
-  repository_description = var.repository_description
-
-  spoke_config = {
-    spoke_name                 = var.spoke_config.spoke_name
-    subscription_id            = var.spoke_config.subscription_id
-    spoke_resource_group_name  = var.spoke_config.spoke_resource_group_name
-    spoke_location             = var.spoke_config.spoke_location
-    key_vault_id               = var.spoke_config.key_vault_id
-    key_vault_name             = var.spoke_config.key_vault_name
-    virtual_network_id         = var.spoke_config.virtual_network_id
-    virtual_network_name       = var.spoke_config.virtual_network_name
-    subnet_ids                 = var.spoke_config.subnet_ids
-    subnet_names               = var.spoke_config.subnet_names
-    log_analytics_workspace_id = var.spoke_config.log_analytics_workspace_id
-    application_insights_id    = var.spoke_config.application_insights_id
-  }
+  github_repository_name    = "zlm-integration-crm"
+  github_api_url            = "https://github.example.com/api/v3"
+  spoke_name                = "crm-dev"
+  environment               = "dev"
+  subscription_id           = var.subscription_id
+  key_vault_id              = var.key_vault_id
+  key_vault_name            = var.key_vault_name
+  integration_module_source = var.integration_module_source
+  spoke_outputs             = var.spoke_outputs
 }
 ```
 
-### 2. Automatic Updates on Subsequent Deployments
+Use the same host and organization in the GitHub provider. `github_api_url` defaults to `https://api.github.com`; Enterprise root URLs are normalized to `/api/v3`. The repository must have an initial commit, normally created by `repository_auto_init = true`. Empty repositories fail with an actionable error instead of writing to the default branch.
 
-The extension automatically detects if this is the first deployment (creates all files) or a subsequent deployment (updates only spoke-outputs.tfvars):
+### File Ownership
 
-- **First deployment**: Creates all repository files including main.tf, variables.tf, etc.
-- **Subsequent deployments**: Only updates spoke-outputs.tfvars with latest spoke configuration
-- **User's main.tf preserved**: Custom integration configurations remain untouched
+Shared starter files (`main.tf`, `variables.tf`, `outputs.tf`, `versions.tf`, `providers.tf`, `backend.tf`, `README.md`, and `.github/workflows/terraform.yml`) are proposed only when missing from the default branch. Existing shared files, including unmodified starter files, are not reset when templates change. Shared template upgrades require a separate workload-reviewed change.
 
-## What This Creates
+Each spoke proposes its own `config/spoke-outputs-<environment>.tfvars` and `config/<environment>.azurerm.tfbackend`. Existing environment configuration can appear as a replacement in a PR, but is never changed on the default branch without the workload team merging it. Two spokes targeting the same repository must use different environment names; configuration paths are environment-scoped.
 
-### First Deployment
+### Pull Request Lifecycle
 
-1. **GitHub Repository** with proper settings and topics
-2. **Terraform Files**:
-   - `main.tf` - Integration resource configuration template
-   - `variables.tf` - Variable definitions
-   - `outputs.tf` - Output definitions
-   - `spoke-outputs.tfvars` - Complete spoke data with ALL subnet options
-   - `versions.tf` - Provider version constraints
-   - `providers.tf` - Provider configuration
-   - `backend.tf` - Azure backend configuration
-3. **GitHub Actions Workflow** for automated deployment
-4. **README.md** with usage documentation
+- Proposals have repository/spoke/environment identities and use `xms/integration-*` branches.
+- The publisher uses the actual default branch, writes files atomically in one Git tree, and never force-updates a branch.
+- An open proposal is reused. Identical deployments create no additional commit or PR; already merged content produces `no_changes`.
+- Closing an unmerged PR rejects that desired revision. An unchanged revision is not reopened. Set `proposal_revision` to a new value to explicitly retry, or deploy changed desired content.
+- A merged PR does not block future proposals, even if its branch was deleted. Keep the PR body identity marker so the publisher can recognize its proposals.
+- Reviewer commits on proposal branches are not overwritten. Merge or resolve those changes before redeploying. Deleting an open proposal branch requires closing the PR before retrying.
+- Branch races fail safely and can be retried. Serialize deployments for the same spoke; different environments use different proposal branches. When two environments bootstrap before either PR merges, refresh the second proposal after merging the first to preserve shared files.
 
-### Subsequent Deployments
+The `terraform_data.repository_proposal` resource is intentionally replaced on every apply so remote PR lifecycle changes are checked even when Terraform inputs do not change. This creates a planned replacement, not repeated repository changes. The script reports the PR URL or no-change/rejected status; Terraform may suppress provisioner output when sensitive inputs are used. PRs are visible in the workload repository.
 
-1. **Updated spoke-outputs.tfvars** with latest spoke configuration and ALL current subnets
-2. **Preserved custom configurations** in main.tf and other user-modified files
-3. **User choice flexibility** - all subnets available, user chooses which to use
+Environment variables and secrets remain Terraform-managed. Removing this extension does not delete repository files or proposals. This does not change the repository-owning `github` extension's destroy behavior.
+
+## Upgrade From Direct File Management
+
+Terraform 1.9 or newer is required. Keep the same module address when upgrading. Ten `removed` blocks use `destroy = false` to relinquish the former `github_repository_file` resources without deleting remote files, including resources from partially completed deployments.
+
+1. Back up each spoke's Terraform state using your protected state-backup procedure. State contains secrets; do not attach it to issues or PRs.
+2. Confirm PowerShell, token permissions, and the Enterprise endpoint before deployment.
+3. Review each spoke's plan. Existing file resources must say they will no longer be managed and **will not be destroyed**. Reject a plan containing repository-file deletion or replacement on the default branch.
+4. Apply through the normal approved pipeline, then review the generated PR. Merge it only after checking environment configuration and workload customizations.
+5. Verify that both dev and acc redeploy successfully and retain their files.
+
+Do not change the old file resources' branch to migrate them: that can destroy files on the original branch. Do not remove the migration blocks until all consuming states have upgraded. Do not roll back to direct-file management without a reviewed state and ownership migration.
+
+The spoke-canvas repository contains a local copy under `infra/modules/extensions/gh_integration`; update and release that copy with this module. Its caller passes the workload provider and configured GitHub endpoint. The generated workflow's existing `acceptance` naming is not changed by this migration; workload teams using `acc` must align the reviewed workflow with their environment names.
 
 ## Subnet Selection Approach
 
@@ -109,7 +106,11 @@ module "function_app" {
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| `repository_name` | Name of the integration repository | `string` | n/a | yes |
+| `github_repository_name` | Existing workload repository | `string` | n/a | yes |
+| `github_api_url` | REST API endpoint matching the provider host | `string` | `https://api.github.com` | no |
+| `github_token` | Sensitive publisher token; otherwise use runner environment | `string` | `""` | no |
+| `proposal_revision` | Explicit retry identifier after rejection | `string` | `""` | no |
+| `environment` | Environment used in configuration paths | `string` | From spoke outputs, otherwise `dev` | no |
 | `repository_description` | Description of the integration repository | `string` | `""` | no |
 | `spoke_config` | Consolidated spoke configuration object from spoke-outputs.tfvars. See below for fields. | `object` | n/a | yes |
 
@@ -143,20 +144,21 @@ module "function_app" {
 
 | Name | Version |
 |------|---------|
-| terraform | >= 1.0 |
+| terraform | >= 1.9 |
 | github | ~> 6.0 |
+| PowerShell | >= 7.2 on the Terraform runner |
 
 ## Templates
 
 The extension uses template files to generate repository content:
 
-- `main.tfvars.tpl` - Complete spoke-outputs template for full setup
-- `spoke-outputs-update.tfvars.tpl` - Minimal template for auto-update mode
+- `spoke-outputs.tfvars.tpl` - Environment spoke configuration
+- `backend-config.tfbackend.tpl` - Environment backend settings
 - `main.tf.tpl`, `variables.tf.tpl`, etc. - Terraform configuration templates
 
 ## GitHub Actions Configuration
 
-After the repository is created, all required variables and secrets are automatically configured, and connection to the spoke is established. The user only needs to run the GitHub Action to deploy their integration resources (defined in `main.tf`) to the spoke.
+After the configuration PR is merged, the workload team can use the proposed workflow. Review its stages, environment names, and authentication settings before running it.
 
 **Deployment steps:**
 1. **Review the setup guide**: [GitHub Actions Setup](GITHUB_ACTIONS_SETUP.md) (optional, for advanced configuration)
@@ -180,8 +182,18 @@ The generated repository includes a complete GitHub Actions workflow (`terraform
 
 See the [GitHub Actions Setup Guide](GITHUB_ACTIONS_SETUP.md) for detailed troubleshooting steps.
 
+## Validation
+
+```sh
+terraform init -backend=false
+terraform fmt -check -recursive
+terraform validate
+terraform test
+pwsh -NoProfile -Command 'Invoke-Pester -Path ./tests/Publish-IntegrationProposal.Tests.ps1 -Output Detailed'
+```
+
+Terraform tests use mocked providers and plan only. PowerShell tests mock the GitHub API and cover customizations, independent dev/acc proposals, PR reuse, rejection, merge recovery, branch races, and file-retention declarations. Before production rollout, test two independent spoke states against a sandbox repository and inspect the real migration plans. Local mocked tests do not certify customer-state migration or GHES permissions.
+
 ## Related Documentation
 
-- [Spoke Deployment System](../spokedeployment-tf/Docs/HowToUseSpokeDeployment.md)
-- [GitHub Repository Extension](../terraform-azurerm-extension-gh-repo/README.md)
-- [Integration Resources Module](../terraform-azurerm-integration-resources/README.md)
+- [GitHub Actions Setup Guide](GITHUB_ACTIONS_SETUP.md)
