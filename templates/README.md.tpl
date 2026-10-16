@@ -227,4 +227,4 @@ For issues related to this integration deployment:
 - [Integration Architecture](./docs/architecture.md)
 
 ---
-*This integration was automatically generated on ${timestamp} for spoke deployment: ${spoke_name}*
+*This integration was generated for spoke deployment: ${spoke_name}*
