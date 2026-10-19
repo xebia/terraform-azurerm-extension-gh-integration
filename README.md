@@ -20,7 +20,7 @@ This extension is used by the spoke deployment system to:
 
 ## Usage
 
-Run Terraform with PowerShell 7.2 or newer available as `pwsh`. The publisher reads `github_token`, then `GH_TOKEN`, then `GITHUB_TOKEN`. A GitHub App installation token is suitable, but the publisher cannot inherit an App session created inside the Terraform GitHub provider. Issue a token in the deployment pipeline and supply it through a protected environment variable. Do not put tokens in committed variable files.
+Run Terraform with PowerShell 7.2 or newer available as `pwsh`. The publisher reads `GH_TOKEN` or `GITHUB_TOKEN` from the apply process. A GitHub App installation token is suitable, but the publisher cannot inherit an App session created inside the Terraform GitHub provider. When applying a saved plan, pass a fresh token at apply time: a token stored in the plan may have been revoked when the preparation job ended. Do not put tokens in committed variable files.
 
 The token needs repository contents and pull requests write permissions, plus permission to update workflows when a missing workflow is proposed (`Workflows: write` for GitHub Apps or the corresponding PAT scope). The App must be installed on the workload repository. Use a token scoped to that repository; no branch-protection bypass is required.
 
@@ -108,7 +108,7 @@ module "function_app" {
 |------|-------------|------|---------|:--------:|
 | `github_repository_name` | Existing workload repository | `string` | n/a | yes |
 | `github_api_url` | REST API endpoint matching the provider host | `string` | `https://api.github.com` | no |
-| `github_token` | Sensitive publisher token; otherwise use runner environment | `string` | `""` | no |
+| `github_token` | Sensitive token for GitHub provider resources and environment secret; the publisher uses apply-time `GH_TOKEN` or `GITHUB_TOKEN` | `string` | `""` | no |
 | `proposal_revision` | Explicit retry identifier after rejection | `string` | `""` | no |
 | `environment` | Environment used in configuration paths | `string` | From spoke outputs, otherwise `dev` | no |
 | `repository_description` | Description of the integration repository | `string` | `""` | no |

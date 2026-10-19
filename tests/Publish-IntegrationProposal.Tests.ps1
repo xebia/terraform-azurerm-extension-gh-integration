@@ -265,6 +265,55 @@ Describe 'Integration proposal publishing' {
     }
 }
 
+Describe 'GitHub API base URL resolution' {
+    It 'uses the public GitHub API when given github.com' {
+        Resolve-IntegrationApiUrl -Value 'https://github.com/' | Should -Be 'https://api.github.com'
+    }
+
+    It 'preserves the public GitHub API host' {
+        Resolve-IntegrationApiUrl -Value 'https://api.github.com/' | Should -Be 'https://api.github.com'
+    }
+
+    It 'preserves a GitHub Enterprise Cloud API host' {
+        Resolve-IntegrationApiUrl -Value 'https://api.xebia-managed-services-eu.ghe.com/' |
+            Should -Be 'https://api.xebia-managed-services-eu.ghe.com'
+    }
+
+    It 'preserves an explicit GitHub Enterprise Server API path' {
+        Resolve-IntegrationApiUrl -Value 'https://github.enterprise.example/api/v3/' |
+            Should -Be 'https://github.enterprise.example/api/v3'
+    }
+
+    It 'adds api/v3 to a GitHub Enterprise Server web root' {
+        Resolve-IntegrationApiUrl -Value 'https://github.enterprise.example/' |
+            Should -Be 'https://github.enterprise.example/api/v3'
+    }
+
+    It 'rejects insecure or credential-bearing API URLs' {
+        { Resolve-IntegrationApiUrl -Value 'http://github.enterprise.example' } |
+            Should -Throw '*HTTPS API URL*'
+        { Resolve-IntegrationApiUrl -Value 'https://user:password@github.enterprise.example' } |
+            Should -Throw '*HTTPS API URL*'
+    }
+}
+
+Describe 'Publisher token resolution' {
+    It 'uses the fresh runner token when no explicit token is provided' {
+        Resolve-IntegrationPublisherToken -ExplicitToken '' -RunnerToken 'fresh-runner-token' -GithubToken 'fallback-token' |
+            Should -Be 'fresh-runner-token'
+    }
+
+    It 'uses GITHUB_TOKEN when GH_TOKEN is unavailable' {
+        Resolve-IntegrationPublisherToken -ExplicitToken '' -RunnerToken '' -GithubToken 'github-token' |
+            Should -Be 'github-token'
+    }
+
+    It 'supports an explicitly supplied token for direct callers' {
+        Resolve-IntegrationPublisherToken -ExplicitToken 'explicit-token' -RunnerToken 'runner-token' -GithubToken 'fallback-token' |
+            Should -Be 'explicit-token'
+    }
+}
+
 Describe 'GitHub API transport' {
     It 'does not disclose credentials or raw network errors' {
         Mock Invoke-WebRequest { throw [System.Net.Http.HttpRequestException]::new('secret-token-in-network-error') }

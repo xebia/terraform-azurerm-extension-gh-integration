@@ -44,6 +44,22 @@ function Get-IntegrationDigest {
     ).ToLowerInvariant()
 }
 
+function Resolve-IntegrationPublisherToken {
+    param(
+        [AllowNull()][string] $ExplicitToken,
+        [AllowNull()][string] $RunnerToken,
+        [AllowNull()][string] $GithubToken
+    )
+
+    foreach ($token in @($ExplicitToken, $RunnerToken, $GithubToken)) {
+        if (-not [string]::IsNullOrWhiteSpace($token)) {
+            return $token
+        }
+    }
+
+    return ''
+}
+
 function Invoke-IntegrationGitHubApi {
     param(
         [Parameter(Mandatory)][hashtable] $Context,
@@ -89,19 +105,38 @@ function Get-IntegrationGitTree {
     return @{ commit = $commit; files = $files }
 }
 
+function Resolve-IntegrationApiUrl {
+    param([Parameter(Mandatory)][string] $Value)
+
+    $apiUri = [uri]$Value
+    if ($apiUri.Scheme -ne 'https' -or $apiUri.UserInfo -or $apiUri.Query -or $apiUri.Fragment) {
+        throw 'github_api_url must be an HTTPS API URL without credentials, query, or fragment.'
+    }
+
+    $hostName = $apiUri.Host.ToLowerInvariant()
+    if ($hostName -in @('github.com', 'www.github.com')) {
+        return 'https://api.github.com'
+    }
+
+    $authority = $apiUri.GetLeftPart([System.UriPartial]::Authority)
+    $path = $apiUri.AbsolutePath.TrimEnd('/')
+    if ([string]::IsNullOrEmpty($path)) {
+        if ($hostName -eq 'api.github.com' -or $hostName.StartsWith('api.')) {
+            return $authority
+        }
+        return "$authority/api/v3"
+    }
+
+    return "$authority$path"
+}
+
 function Invoke-IntegrationProposal {
     param(
         [Parameter(Mandatory)][hashtable] $Manifest,
         [Parameter(Mandatory)][hashtable] $Context
     )
 
-    $apiUri = [uri]$Context.api_url
-    if ($apiUri.Scheme -ne 'https' -or $apiUri.UserInfo -or $apiUri.Query -or $apiUri.Fragment) {
-        throw 'github_api_url must be an HTTPS API URL without credentials, query, or fragment.'
-    }
-    if ($apiUri.Host -ne 'api.github.com' -and $apiUri.AbsolutePath.Trim('/') -eq '') {
-        $Context.api_url = "$($Context.api_url.TrimEnd('/'))/api/v3"
-    }
+    $Context.api_url = Resolve-IntegrationApiUrl -Value $Context.api_url
     if ([string]::IsNullOrWhiteSpace($Context.token)) {
         throw 'Set github_token, GH_TOKEN, or GITHUB_TOKEN for the proposal publisher.'
     }
@@ -224,9 +259,10 @@ function Invoke-IntegrationProposal {
 if ($MyInvocation.InvocationName -ne '.') {
     $manifestJson = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($env:XMS_PROPOSAL_MANIFEST))
     $manifest = ConvertFrom-Json -InputObject $manifestJson -AsHashtable
-    $token = $env:XMS_PROPOSAL_TOKEN
-    if ([string]::IsNullOrWhiteSpace($token)) { $token = $env:GH_TOKEN }
-    if ([string]::IsNullOrWhiteSpace($token)) { $token = $env:GITHUB_TOKEN }
+    $token = Resolve-IntegrationPublisherToken `
+        -ExplicitToken $env:XMS_PROPOSAL_TOKEN `
+        -RunnerToken $env:GH_TOKEN `
+        -GithubToken $env:GITHUB_TOKEN
     $result = Invoke-IntegrationProposal -Manifest $manifest -Context @{ api_url = $env:XMS_GITHUB_API_URL; token = $token }
     Write-Host "Integration proposal: $($result.status) $($result.url)"
 }

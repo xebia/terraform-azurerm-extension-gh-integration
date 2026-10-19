@@ -41,7 +41,6 @@ resource "terraform_data" "repository_proposal" {
     environment = {
       XMS_PROPOSAL_SCRIPT   = abspath("${path.module}/scripts/Publish-IntegrationProposal.ps1")
       XMS_PROPOSAL_MANIFEST = base64encode(jsonencode(local.proposal_manifest))
-      XMS_PROPOSAL_TOKEN    = var.github_token
       XMS_GITHUB_API_URL    = var.github_api_url
     }
   }
